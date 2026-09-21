@@ -125,12 +125,6 @@ function renderHome() {
         <div><span class="num">${stats.totalNotes > 0 ? Math.round(stats.totalNotes / stats.total) : 0}</span><span class="lbl">平均笔记/本</span></div>
       </div>
 
-      <div class="content-toolbar">
-        <span class="content-tag">📚 书本笔记内容</span>
-        <a class="btn btn-ghost btn-mini" href="#/books">书架 →</a>
-        <a class="btn btn-ghost btn-mini" href="#/recommend">推荐 →</a>
-      </div>
-
       <section class="quotes-rotator" id="quotes-rotator" aria-label="书中名言轮播">
         <span class="quotes-label">书中名言</span>
         <div class="quotes-stage" id="quotes-stage">
