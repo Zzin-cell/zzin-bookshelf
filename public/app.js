@@ -427,58 +427,54 @@ function renderBook(slug) {
       <a class="btn btn-ghost" href="#/books">← 返回书架</a>
     </div>
     <div class="book-detail-split">
-      <aside class="left book-pane">
-        <div class="book-pane-inner">
-          <div class="cover-large">${cover}</div>
-          <h1>${escapeHtml(book.title)}</h1>
-          <div class="author">${escapeHtml(book.author)}</div>
-          <dl class="meta-list">
-            <dt>分类</dt><dd>${escapeHtml(book.category || "—")}</dd>
-            <dt>出版社</dt><dd>${escapeHtml(book.publisher || "—")}</dd>
-            <dt>出版</dt><dd>${escapeHtml(book.publishDate || "—")}</dd>
-            <dt>ISBN</dt><dd>${escapeHtml(book.isbn || "—")}</dd>
-            <dt>笔记</dt><dd>${book.noteCount} 条 (本人 ${mineNotes} 条)</dd>
-            <dt>书评</dt><dd>${book.reviewCount || 0} 条</dd>
-            <dt>进度</dt><dd>${isFinished(book) ? "已读完" : escapeHtml(book.progress || "0%")}</dd>
-            <dt>阅读时间</dt><dd>${escapeHtml(book.readingTime || "—")}</dd>
-          </dl>
-          ${book.pcUrl ? `<div class="actions"><a class="btn btn-primary" href="${escapeHtml(book.pcUrl)}" target="_blank" rel="noopener">在微信读书打开 ↗</a></div>` : ""}
-        </div>
+      <aside class="left">
+        <div class="cover-large">${cover}</div>
+        <h1>${escapeHtml(book.title)}</h1>
+        <div class="author">${escapeHtml(book.author)}</div>
+        <dl class="meta-list">
+          <dt>分类</dt><dd>${escapeHtml(book.category || "—")}</dd>
+          <dt>出版社</dt><dd>${escapeHtml(book.publisher || "—")}</dd>
+          <dt>出版</dt><dd>${escapeHtml(book.publishDate || "—")}</dd>
+          <dt>ISBN</dt><dd>${escapeHtml(book.isbn || "—")}</dd>
+          <dt>笔记</dt><dd>${book.noteCount} 条 (本人 ${mineNotes} 条)</dd>
+          <dt>书评</dt><dd>${book.reviewCount || 0} 条</dd>
+          <dt>进度</dt><dd>${isFinished(book) ? "已读完" : escapeHtml(book.progress || "0%")}</dd>
+          <dt>阅读时间</dt><dd>${escapeHtml(book.readingTime || "—")}</dd>
+        </dl>
+        ${book.pcUrl ? `<div class="actions"><a class="btn btn-primary" href="${escapeHtml(book.pcUrl)}" target="_blank" rel="noopener">在微信读书打开 ↗</a></div>` : ""}
       </aside>
 
-      <section class="chapters-wrap book-pane">
-        <div class="book-pane-inner">
-          <div class="chapter-toc-head">
-            <div class="chapter-toc-info">
-              <div class="chapter-toc-eyebrow">章节目录</div>
-              <h2 class="chapter-toc-title">${chaptersTotal} 章 · ${withSummary} 章含 AI 概要</h2>
-            </div>
-            <div class="chapter-toc-actions">
-              <button id="expand-all" class="btn btn-ghost">全部展开</button>
-              <button id="collapse-all" class="btn btn-ghost">全部收起</button>
-            </div>
+      <section class="chapters-wrap">
+        <div class="chapter-toc-head">
+          <div class="chapter-toc-info">
+            <div class="chapter-toc-eyebrow">章节目录</div>
+            <h2 class="chapter-toc-title">${chaptersTotal} 章 · ${withSummary} 章含 AI 概要</h2>
           </div>
-
-          ${book.summary ? `<p class="summary-text">${escapeHtml(book.summary)}</p>` : ""}
-
-          <div class="chapters-list" id="chapters-list" style="margin-top:18px">
-            ${book.chapters.map((c, idx) => renderChapterCard(c, idx)).join("")}
+          <div class="chapter-toc-actions">
+            <button id="expand-all" class="btn btn-ghost">全部展开</button>
+            <button id="collapse-all" class="btn btn-ghost">全部收起</button>
           </div>
-
-          ${hotNotes.length ? `
-            <section class="hot-notes">
-              <h4>🔥 这本书里大众最热的笔记</h4>
-              <ol>
-                ${hotNotes.map(n => `
-                  <li>
-                    <span>${escapeHtml(n.text)}</span>
-                    <small class="hot-meta">${escapeHtml(n.book)} · ${escapeHtml(n.chapter)} · ${n.count} 人共读</small>
-                  </li>
-                `).join("")}
-              </ol>
-            </section>
-          ` : ""}
         </div>
+
+        ${book.summary ? `<p class="summary-text">${escapeHtml(book.summary)}</p>` : ""}
+
+        <div class="chapters-list" id="chapters-list" style="margin-top:18px">
+          ${book.chapters.map((c, idx) => renderChapterCard(c, idx)).join("")}
+        </div>
+
+        ${hotNotes.length ? `
+          <section class="hot-notes">
+            <h4>🔥 这本书里大众最热的笔记</h4>
+            <ol>
+              ${hotNotes.map(n => `
+                <li>
+                  <span>${escapeHtml(n.text)}</span>
+                  <small class="hot-meta">${escapeHtml(n.book)} · ${escapeHtml(n.chapter)} · ${n.count} 人共读</small>
+                </li>
+              `).join("")}
+            </ol>
+          </section>
+        ` : ""}
       </section>
     </div>
   `;
@@ -802,16 +798,9 @@ function showSaveFlash() {
 
 // ---------- router ----------
 
-function lockBodyScroll(lock) {
-  if (lock) document.body.classList.add("body-scroll-lock");
-  else document.body.classList.remove("body-scroll-lock");
-}
-
 function route() {
   const hash = location.hash || "#/";
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
-  const onBook = !!(parts[0] === "book" && parts[1]);
-  lockBodyScroll(onBook); // book-detail becomes its own scroll page
   if (parts.length === 0) return renderHome();
   if (parts[0] === "books") return renderBooks();
   if (parts[0] === "recommend") return renderRecommend();

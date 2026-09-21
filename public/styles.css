@@ -659,70 +659,46 @@ img { max-width: 100%; display: block; }
 .book-detail-split {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
-  /* Single explicit row that fills the container — without this, grid
-     auto-rows collapses to content height and align-items: stretch
-     has nothing to stretch into. */
-  grid-template-rows: 1fr;
   gap: 32px;
-  align-items: stretch; /* equal-height panes so each owns its own scroll */
-  /* Explicit height (not max-height) keeps both panes reliably
-     visible — same fix as .home-split, see note there. */
-  height: calc(100vh - 100px);
-  min-height: 520px;
+  align-items: start;
+  /* Page-level scroll owns the layout (no dual-pane independent scroll) */
 }
 
-/* === BOOK DETAIL dual-pane independent scroll === */
-.book-pane {
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-  scroll-behavior: smooth;
-  max-height: calc(100vh - 100px);
-}
-.book-pane::-webkit-scrollbar { width: 8px; }
-.book-pane::-webkit-scrollbar-track { background: transparent; }
-.book-pane::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 4px;
-  border: 2px solid var(--paper);
-}
-.book-pane::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+/* === BOOK DETAIL — page-level scroll restores ===
+   Body's main scrollbar controls the whole page; left + right columns
+   are normal block sections that flow naturally. */
 
-.book-pane-inner {
-  padding: 18px 18px 32px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.left.book-pane {
+.left {
   background: var(--paper-card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: sticky;
+  top: 80px; /* below sticky top-nav so left card stays visible while
+                the right column scrolls underneath */
+  align-self: start;
 }
-.left.book-pane .book-pane-inner { gap: 16px; }
+.chapters-wrap { /* no card — keep content flush with page edges */ }
 
-.chapters-wrap.book-pane { /* no card — keep content flush */ }
-.chapters-wrap.book-pane .book-pane-inner { gap: 0; }
-
-/* Sticky chapter-table-of-contents header inside the right pane.
-   The "章节目录 + 全部展开 / 收起" bar stays pinned to the top while the
-   chapter cards scroll underneath, so the controls never disappear. */
+/* Sticky chapter-table-of-contents header — now sticks to the viewport
+   top (under the top-nav) while the *page itself* scrolls, not just
+   a right pane. */
 .chapter-toc-head {
   position: sticky;
-  top: 0;
+  top: 64px; /* below the sticky top-nav */
   z-index: 5;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
   gap: 14px;
   background: var(--paper);
-  /* span the right pane horizontally so background covers scrolled content */
-  margin: 0 -18px;
-  padding: 14px 18px 12px;
+  padding: 12px 0 14px;
   border-bottom: 1px solid var(--line-soft);
+  margin: 18px 0 14px;
 }
 .chapter-toc-eyebrow {
   font-size: 11px;
@@ -740,10 +716,8 @@ img { max-width: 100%; display: block; }
 }
 .chapter-toc-actions { display: flex; gap: 8px; }
 
-/* Big-screen only: lock page-level scroll so the dual-pane owns scrolling */
-@media (min-width: 881px) {
-  body.body-scroll-lock { overflow: hidden; }
-}
+/* Big-screen book-detail: no more page-level scroll lock —
+   the main scrollbar (body / chrome) drives the whole page. */
 .book-detail .cover-large {
   aspect-ratio: 3 / 4;
   max-height: 360px;
@@ -1364,15 +1338,13 @@ img { max-width: 100%; display: block; }
   .hero { padding: 48px 8px 28px; }
   .book-detail-split {
     grid-template-columns: 1fr;
-    max-height: none;
     gap: 18px;
   }
-  .book-pane {
-    max-height: none;
-    overflow: visible;
+  .left {
+    position: static;
   }
-  .book-pane-inner {
-    padding: 14px 14px 24px;
+  .chapter-toc-head {
+    top: 56px;
   }
   .bookshelf { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
   .featured-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
