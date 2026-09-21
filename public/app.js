@@ -460,6 +460,23 @@ function renderBook(slug) {
 
       <section class="chapters-wrap book-pane">
         <div class="book-pane-inner">
+          <div class="chapter-toc-head">
+            <div class="chapter-toc-info">
+              <div class="chapter-toc-eyebrow">章节目录</div>
+              <h2 class="chapter-toc-title">${chaptersTotal} 章 · ${withSummary} 章含 AI 概要</h2>
+            </div>
+            <div class="chapter-toc-actions">
+              <button id="expand-all" class="btn btn-ghost">全部展开</button>
+              <button id="collapse-all" class="btn btn-ghost">全部收起</button>
+            </div>
+          </div>
+
+          ${book.summary ? `<p class="summary-text">${escapeHtml(book.summary)}</p>` : ""}
+
+          <div class="chapters-list" id="chapters-list" style="margin-top:18px">
+            ${book.chapters.map((c, idx) => renderChapterCard(c, idx)).join("")}
+          </div>
+
           ${hotNotes.length ? `
             <section class="hot-notes">
               <h4>🔥 这本书里大众最热的笔记</h4>
@@ -473,23 +490,6 @@ function renderBook(slug) {
               </ol>
             </section>
           ` : ""}
-
-          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin:18px 0 14px">
-            <div>
-              <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">章节目录</div>
-              <h2 style="margin:0;font-family:var(--font-serif);font-size:22px;font-weight:500;letter-spacing:-.01em">${chaptersTotal} 章 · ${withSummary} 章含 AI 概要</h2>
-            </div>
-            <div style="display:flex;gap:8px">
-              <button id="expand-all" class="btn btn-ghost">全部展开</button>
-              <button id="collapse-all" class="btn btn-ghost">全部收起</button>
-            </div>
-          </div>
-
-          ${book.summary ? `<p class="summary-text">${escapeHtml(book.summary)}</p>` : ""}
-
-          <div class="chapters-list" id="chapters-list" style="margin-top:18px">
-            ${book.chapters.map((c, idx) => renderChapterCard(c, idx)).join("")}
-          </div>
         </div>
       </section>
     </div>

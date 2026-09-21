@@ -152,8 +152,10 @@ img { max-width: 100%; display: block; }
 .home-split {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 72px); /* leave room for header (~64px) + small margin */
-  min-height: 0;
+  /* Force explicit height so the two panes reliably fill the viewport.
+     Use min-height fallback for very short viewports. */
+  height: calc(100vh - 72px); /* header (~64) + small margin */
+  min-height: 520px;
   padding: 0;
 }
 
@@ -184,7 +186,8 @@ img { max-width: 100%; display: block; }
 
 .hero-pane-inner {
   padding: 36px 20px 28px;
-  min-height: 100%;
+  /* removed min-height: 100% which interacted badly with the
+     overflow:auto parent + flex: 1 1 0 sizing and could cause collapse */
   max-width: 760px;
   margin: 0 auto;
   box-sizing: border-box;
@@ -729,9 +732,16 @@ img { max-width: 100%; display: block; }
 .book-detail-split {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+  /* Single explicit row that fills the container — without this, grid
+     auto-rows collapses to content height and align-items: stretch
+     has nothing to stretch into. */
+  grid-template-rows: 1fr;
   gap: 32px;
   align-items: stretch; /* equal-height panes so each owns its own scroll */
-  max-height: calc(100vh - 100px); /* top-nav(64) + .page padding-top(36) */
+  /* Explicit height (not max-height) keeps both panes reliably
+     visible — same fix as .home-split, see note there. */
+  height: calc(100vh - 100px);
+  min-height: 520px;
 }
 
 /* === BOOK DETAIL dual-pane independent scroll === */
@@ -754,7 +764,6 @@ img { max-width: 100%; display: block; }
 
 .book-pane-inner {
   padding: 18px 18px 32px;
-  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -770,6 +779,39 @@ img { max-width: 100%; display: block; }
 
 .chapters-wrap.book-pane { /* no card — keep content flush */ }
 .chapters-wrap.book-pane .book-pane-inner { gap: 0; }
+
+/* Sticky chapter-table-of-contents header inside the right pane.
+   The "章节目录 + 全部展开 / 收起" bar stays pinned to the top while the
+   chapter cards scroll underneath, so the controls never disappear. */
+.chapter-toc-head {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  background: var(--paper);
+  /* span the right pane horizontally so background covers scrolled content */
+  margin: 0 -18px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.chapter-toc-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 4px;
+}
+.chapter-toc-title {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+.chapter-toc-actions { display: flex; gap: 8px; }
 
 /* Big-screen only: lock page-level scroll so the dual-pane owns scrolling */
 @media (min-width: 881px) {
