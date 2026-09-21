@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="avatarBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1f3a5f"/>
+      <stop offset="100%" stop-color="#11253f"/>
+    </linearGradient>
+    <linearGradient id="avatarMark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#c08a3e"/>
+      <stop offset="100%" stop-color="#e8b563"/>
+    </linearGradient>
+  </defs>
+  <!-- background -->
+  <rect width="200" height="200" rx="32" ry="32" fill="url(#avatarBg)"/>
+  <!-- subtle inner ring -->
+  <circle cx="100" cy="100" r="86" fill="none" stroke="rgba(192,138,62,0.18)" stroke-width="1"/>
+  <!-- book + ascending line (mini logo) -->
+  <g transform="translate(50,62) scale(0.5)">
+    <path d="M 14 60 Q 24 50 44 56 L 50 60 L 56 56 Q 76 50 86 60 L 86 110 Q 60 96 14 110 Z" fill="none" stroke="#c08a3e" stroke-width="6" stroke-linejoin="round"/>
+    <path d="M 30 70 Q 50 64 70 70 L 76 76 L 82 70 Q 88 64 96 70" fill="none" stroke="#c08a3e" stroke-width="5" stroke-linejoin="round"/>
+    <line x1="50" y1="64" x2="86" y2="30" stroke="url(#avatarMark)" stroke-width="6" stroke-linecap="round"/>
+    <polygon points="86,30 76,32 82,40" fill="#c08a3e"/>
+  </g>
+  <!-- name char 张 -->
+  <text x="100" y="160" font-family="'Source Han Serif SC','Noto Serif CJK SC',serif" font-size="62" font-weight="500" fill="#f5f3ed" text-anchor="middle">张</text>
+</svg>

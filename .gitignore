@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local runtime / state
+.deploy_pending
+data/watcher.log
+data/_todo_summaries.json
+data/books.json
+public/data/books.json
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+
+# Local server cache (if user ever runs one)
+*.pyc

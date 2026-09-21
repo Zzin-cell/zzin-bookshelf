@@ -1,0 +1,15 @@
+{
+  "name": "张紫宁",
+  "displayName": "张紫宁",
+  "handle": "zhang_ninghu",
+  "avatar": "assets/avatar.svg",
+  "bio": "通识金融财经 · 口播账号主理人",
+  "bio_long": "在用最通俗的方式讲清楚金融那些事。专注经济学入门、投资思维、金融常识三个系列。",
+  "intro": "做了 5 年口播，把读书笔记整理出来，给自己和同路人一个能反复翻的地方。这个站是我本地 Obsidian vault 的镜像视图：本地改，网页自动改。",
+  "links": {
+    "douyin": "https://www.douyin.com/",
+    "wechat_read": "https://weread.qq.com/"
+  },
+  "vault_path": "C:\\Users\\MR\\Documents\\Obsidian Vault\\",
+  "deploy_mode": "auto"
+}

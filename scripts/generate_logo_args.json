@@ -1,0 +1,16 @@
+{
+  "requests": [
+    {
+      "prompt": "Minimalist geometric logo for a personal book library called 'Zhang Zining Book Library'. Design: a stylized open book with pages forming a graceful 'Z' shape, with a thin upward ascending chart line emerging from the pages, symbolizing learning-driven financial growth. Color palette: deep navy blue (#1f3a5f) as primary, warm gold (#c08a3e) as accent, on a clean off-white background (#f5f3ed). Style: flat geometric, modern, professional, suitable for a finance-economics content creator. Generous negative space, no text, no skeuomorphism. Vector-like crisp edges. Square 1:1.",
+      "aspect_ratio": "1:1",
+      "resolution": "2K",
+      "output_file": "logo-main.png"
+    },
+    {
+      "prompt": "Minimalist square favicon icon, 64x64 equivalent, for a personal book library. A compact geometric monogram combining a stylized book and an ascending line, navy blue and warm gold on cream background. Highly simplified so it stays legible at 32x32 and 16x16 pixels. Flat two-tone design, no gradient, no text, no skeuomorphism. Strong silhouettes.",
+      "aspect_ratio": "1:1",
+      "resolution": "1K",
+      "output_file": "logo-favicon.png"
+    }
+  ]
+}
