@@ -664,9 +664,17 @@ img { max-width: 100%; display: block; }
   /* Page-level scroll owns the layout (no dual-pane independent scroll) */
 }
 
-/* === BOOK DETAIL — page-level scroll restores ===
-   Body's main scrollbar controls the whole page; left + right columns
-   are normal block sections that flow naturally. */
+/* === BOOK DETAIL — three independent scroll axes ===
+   1. Chrome main scrollbar  — controls the whole <html>/<body> flow
+                                (footer, hot-notes past sticky zone, etc.).
+   2. Left pane inner axis   — intro card (cover / meta) sticky on screen,
+                                scrollable when content > viewport.
+   3. Right pane inner axis  — chapter cards / hot-notes sticky container,
+                                scrollable when content > viewport.
+
+   Implementation: both panes have a constrained max-height + overflow-y:auto
+   AND are sticky, so chrome scroll mainly moves the page wrapper around
+   them. They each keep their own scrollbar visible when content > fit. */
 
 .left {
   background: var(--paper-card);
@@ -677,12 +685,41 @@ img { max-width: 100%; display: block; }
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* sticky so chrome scroll won't shove the intro card off-screen;
+     inner max-height + overflow gives the left column its own scrollbar. */
   position: sticky;
-  top: 80px; /* below sticky top-nav so left card stays visible while
-                the right column scrolls underneath */
+  top: 88px;
   align-self: start;
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  scroll-behavior: smooth;
 }
-.chapters-wrap { /* no card — keep content flush with page edges */ }
+.left::-webkit-scrollbar { width: 6px; }
+.left::-webkit-scrollbar-track { background: transparent; }
+.left::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 3px;
+}
+.left::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+.chapters-wrap {
+  max-height: calc(100vh - 100px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  scroll-behavior: smooth;
+}
+.chapters-wrap::-webkit-scrollbar { width: 8px; }
+.chapters-wrap::-webkit-scrollbar-track { background: transparent; }
+.chapters-wrap::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+}
+.chapters-wrap::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
 
 /* Sticky chapter-table-of-contents header — now sticks to the viewport
    top (under the top-nav) while the *page itself* scrolls, not just
@@ -1342,6 +1379,12 @@ img { max-width: 100%; display: block; }
   }
   .left {
     position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .chapters-wrap {
+    max-height: none;
+    overflow: visible;
   }
   .chapter-toc-head {
     top: 56px;
