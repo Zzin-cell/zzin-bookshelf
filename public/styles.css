@@ -706,24 +706,18 @@ img { max-width: 100%; display: block; }
 .left::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
 
 .chapters-wrap {
-  max-height: calc(100vh - 100px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-  scroll-behavior: smooth;
+  /* No overflow / max-height here — earlier overflow caused the
+     sticky chapter-toc-head to be "stepped through" by chapter cards
+     (sticky inside an overflow:auto container doesn't reserve flow
+     space, so chapters can render underneath the sticky bar).
+     Now right column flows with the page chrome scroll; sticky head
+     rides on the chrome scroll, not on right-column scroll. */
 }
-.chapters-wrap::-webkit-scrollbar { width: 8px; }
-.chapters-wrap::-webkit-scrollbar-track { background: transparent; }
-.chapters-wrap::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 4px;
-}
-.chapters-wrap::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
 
-/* Sticky chapter-table-of-contents header — now sticks to the viewport
-   top (under the top-nav) while the *page itself* scrolls, not just
-   a right pane. */
+/* Sticky chapter-table-of-contents header — sticks to the viewport
+   top (under the top-nav) while the *page itself* scrolls. Visual
+   lift via box-shadow so the bar reads as "above" the chapter
+   cards beneath, instead of stacking flat against their top edge. */
 .chapter-toc-head {
   position: sticky;
   top: 64px; /* below the sticky top-nav */
@@ -733,9 +727,10 @@ img { max-width: 100%; display: block; }
   justify-content: space-between;
   gap: 14px;
   background: var(--paper);
-  padding: 12px 0 14px;
+  padding: 14px 0;
+  margin: 18px 0 20px;
   border-bottom: 1px solid var(--line-soft);
-  margin: 18px 0 14px;
+  box-shadow: 0 6px 14px -10px rgba(26, 31, 36, 0.18);
 }
 .chapter-toc-eyebrow {
   font-size: 11px;
