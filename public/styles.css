@@ -623,8 +623,6 @@ img { max-width: 100%; display: block; }
   align-items: start;
 }
 .book-detail .left {
-  position: sticky;
-  top: 92px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -633,6 +631,7 @@ img { max-width: 100%; display: block; }
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
+  align-self: start;
 }
 .book-detail .cover-large {
   aspect-ratio: 3 / 4;

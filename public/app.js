@@ -454,7 +454,7 @@ function renderBook(slug) {
         ` : ""}
       </aside>
 
-      <section>
+      <section class="chapters-wrap">
         <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:14px;margin-bottom:14px">
           <div>
             <div style="font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:4px">章节目录</div>
