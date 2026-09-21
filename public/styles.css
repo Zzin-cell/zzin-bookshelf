@@ -726,22 +726,54 @@ img { max-width: 100%; display: block; }
    BOOK DETAIL
    ==================================================================== */
 
-.book-detail {
+.book-detail-split {
   display: grid;
   grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
   gap: 32px;
-  align-items: start;
+  align-items: stretch; /* equal-height panes so each owns its own scroll */
+  max-height: calc(100vh - 100px); /* top-nav(64) + .page padding-top(36) */
 }
-.book-detail .left {
+
+/* === BOOK DETAIL dual-pane independent scroll === */
+.book-pane {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+  scroll-behavior: smooth;
+  max-height: calc(100vh - 100px);
+}
+.book-pane::-webkit-scrollbar { width: 8px; }
+.book-pane::-webkit-scrollbar-track { background: transparent; }
+.book-pane::-webkit-scrollbar-thumb {
+  background: var(--line);
+  border-radius: 4px;
+  border: 2px solid var(--paper);
+}
+.book-pane::-webkit-scrollbar-thumb:hover { background: var(--ink-soft); }
+
+.book-pane-inner {
+  padding: 18px 18px 32px;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 18px;
+  gap: 14px;
+}
+
+.left.book-pane {
   background: var(--paper-card);
   border: 1px solid var(--line);
   border-radius: var(--radius);
   box-shadow: var(--shadow-1);
-  align-self: start;
+}
+.left.book-pane .book-pane-inner { gap: 16px; }
+
+.chapters-wrap.book-pane { /* no card — keep content flush */ }
+.chapters-wrap.book-pane .book-pane-inner { gap: 0; }
+
+/* Big-screen only: lock page-level scroll so the dual-pane owns scrolling */
+@media (min-width: 881px) {
+  body.body-scroll-lock { overflow: hidden; }
 }
 .book-detail .cover-large {
   aspect-ratio: 3 / 4;
@@ -1363,8 +1395,18 @@ img { max-width: 100%; display: block; }
   .hero-pane-inner { padding: 28px 16px 24px; }
   .hero.hero-pane .hero-pane-inner { padding-top: 36px; padding-bottom: 36px; }
   .home-split { max-height: calc(100vh - 60px); }
-  .book-detail { grid-template-columns: 1fr; }
-  .book-detail .left { position: static; }
+  .book-detail-split {
+    grid-template-columns: 1fr;
+    max-height: none;
+    gap: 18px;
+  }
+  .book-pane {
+    max-height: none;
+    overflow: visible;
+  }
+  .book-pane-inner {
+    padding: 14px 14px 24px;
+  }
   .bookshelf { grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px; }
   .featured-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 14px; }
   .section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
