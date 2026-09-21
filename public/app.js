@@ -105,64 +105,58 @@ function renderHome() {
   const featured = pickFeatured(state.books, 4);
 
   app.innerHTML = `
-    <div class="home-split">
-      <section class="hero hero-pane" aria-label="简介">
-        <div class="hero-pane-inner">
-          <h1 class="hero-title">张紫宁</h1>
-          <p class="hero-sub">一点有意思的书</p>
-          <div class="hero-cta">
-            <a class="btn btn-primary" href="#/books">浏览书架 · ${stats.total} 本</a>
-            <a class="btn btn-dark" href="#/recommend">编辑推荐</a>
-            <a class="btn btn-outline" href="#/about">关于这个库</a>
-          </div>
+    <section class="hero" aria-label="简介">
+      <h1 class="hero-title">张紫宁</h1>
+      <p class="hero-sub">一点有意思的书</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#/books">浏览书架 · ${stats.total} 本</a>
+        <a class="btn btn-dark" href="#/recommend">编辑推荐</a>
+        <a class="btn btn-outline" href="#/about">关于这个库</a>
+      </div>
+    </section>
+
+    <hr class="hero-divider" aria-hidden="true" />
+
+    <section class="hero-content" aria-label="藏书数据">
+      <div class="page-stats">
+        <div><span class="num">${stats.total}</span><span class="lbl">藏书</span></div>
+        <div><span class="num">${stats.totalNotes.toLocaleString()}</span><span class="lbl">笔记</span></div>
+        <div><span class="num">${stats.finished}</span><span class="lbl">已读完</span></div>
+        <div><span class="num">${stats.totalNotes > 0 ? Math.round(stats.totalNotes / stats.total) : 0}</span><span class="lbl">平均笔记/本</span></div>
+      </div>
+
+      <div class="content-toolbar">
+        <span class="content-tag">📚 书本笔记内容</span>
+        <a class="btn btn-ghost btn-mini" href="#/books">书架 →</a>
+        <a class="btn btn-ghost btn-mini" href="#/recommend">推荐 →</a>
+      </div>
+
+      <section class="quotes-rotator" id="quotes-rotator" aria-label="书中名言轮播">
+        <span class="quotes-label">书中名言</span>
+        <div class="quotes-stage" id="quotes-stage">
+          ${QUOTES_POOL.map((q, i) => `
+            <div class="quote-slide ${i === 0 ? "is-active" : ""}" data-i="${i}">
+              <p class="quote-text">${escapeHtml(q.text)}</p>
+              <small class="quote-src">— 《${escapeHtml(q.book)}》 · ${escapeHtml(q.chapter)}</small>
+            </div>
+          `).join("")}
         </div>
+        <span class="quotes-counter" id="quotes-counter">1 / ${QUOTES_POOL.length}</span>
       </section>
 
-      <hr class="hero-divider" aria-hidden="true" />
-
-      <section class="hero-content hero-pane" aria-label="藏书数据">
-        <div class="hero-pane-inner">
-          <div class="page-stats">
-            <div><span class="num">${stats.total}</span><span class="lbl">藏书</span></div>
-            <div><span class="num">${stats.totalNotes.toLocaleString()}</span><span class="lbl">笔记</span></div>
-            <div><span class="num">${stats.finished}</span><span class="lbl">已读完</span></div>
-            <div><span class="num">${stats.totalNotes > 0 ? Math.round(stats.totalNotes / stats.total) : 0}</span><span class="lbl">平均笔记/本</span></div>
-          </div>
-
-          <div class="content-toolbar">
-            <span class="content-tag">📚 书本笔记内容</span>
-            <a class="btn btn-ghost btn-mini" href="#/books">书架 →</a>
-            <a class="btn btn-ghost btn-mini" href="#/recommend">推荐 →</a>
-          </div>
-
-          <section class="quotes-rotator" id="quotes-rotator" aria-label="书中名言轮播">
-            <span class="quotes-label">书中名言</span>
-            <div class="quotes-stage" id="quotes-stage">
-              ${QUOTES_POOL.map((q, i) => `
-                <div class="quote-slide ${i === 0 ? "is-active" : ""}" data-i="${i}">
-                  <p class="quote-text">${escapeHtml(q.text)}</p>
-                  <small class="quote-src">— 《${escapeHtml(q.book)}》 · ${escapeHtml(q.chapter)}</small>
-                </div>
-              `).join("")}
-            </div>
-            <span class="quotes-counter" id="quotes-counter">1 / ${QUOTES_POOL.length}</span>
-          </section>
-
-          <section class="featured">
-            <div class="section-head">
-              <h2>编辑推荐</h2>
-              <p class="lead">已读完 + 笔记密度高 + 跟金融财经/认知相关 —— 这四本最先翻。</p>
-            </div>
-            <div class="featured-grid">
-              ${featured.map(renderFeaturedCard).join("")}
-            </div>
-            <div style="text-align:center;margin-top:24px">
-              <a class="btn btn-ghost" href="#/recommend">看全部推荐 →</a>
-            </div>
-          </section>
+      <section class="featured">
+        <div class="section-head">
+          <h2>编辑推荐</h2>
+          <p class="lead">已读完 + 笔记密度高 + 跟金融财经/认知相关 —— 这四本最先翻。</p>
+        </div>
+        <div class="featured-grid">
+          ${featured.map(renderFeaturedCard).join("")}
+        </div>
+        <div style="text-align:center;margin-top:24px">
+          <a class="btn btn-ghost" href="#/recommend">看全部推荐 →</a>
         </div>
       </section>
-    </div>
+    </section>
   `;
 
   // Quote rotator: vertical slide every 5s, pause on hover.

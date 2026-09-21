@@ -148,61 +148,9 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
-/* ====== Home split (independent scroll panes) ====== */
-.home-split {
-  display: flex;
-  flex-direction: column;
-  /* Force explicit height so the two panes reliably fill the viewport.
-     Use min-height fallback for very short viewports. */
-  height: calc(100vh - 72px); /* header (~64) + small margin */
-  min-height: 520px;
-  padding: 0;
-}
-
-.hero-pane {
-  flex: 1 1 0;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-  scrollbar-width: thin;
-  scrollbar-color: var(--line) transparent;
-  /* keep behaviour consistent on both panes */
-  scroll-behavior: smooth;
-}
-.hero-pane::-webkit-scrollbar {
-  width: 8px;
-}
-.hero-pane::-webkit-scrollbar-track {
-  background: transparent;
-}
-.hero-pane::-webkit-scrollbar-thumb {
-  background: var(--line);
-  border-radius: 4px;
-  border: 2px solid var(--paper);
-}
-.hero-pane::-webkit-scrollbar-thumb:hover {
-  background: var(--ink-soft);
-}
-
-.hero-pane-inner {
-  padding: 36px 20px 28px;
-  /* removed min-height: 100% which interacted badly with the
-     overflow:auto parent + flex: 1 1 0 sizing and could cause collapse */
-  max-width: 760px;
-  margin: 0 auto;
-  box-sizing: border-box;
-}
-
-/* hero pane: vertically center the (short) intro */
-.hero.hero-pane .hero-pane-inner {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  padding-top: 60px;
-  padding-bottom: 60px;
-}
+/* ====== Home — single stack layout ======
+   Hero (简介) on top, gold divider, then content (藏书数据) below.
+   No panes, no independent scroll — just page-level flow. */
 
 .hero-divider {
   border: none;
@@ -215,10 +163,9 @@ img { max-width: 100%; display: block; }
     var(--line) 85%,
     transparent 100%
   );
-  margin: 0 auto;
+  margin: 12px auto 36px;
   position: relative;
   max-width: 760px;
-  flex: 0 0 auto;
 }
 .hero-divider::after {
   content: "📖";
@@ -231,6 +178,11 @@ img { max-width: 100%; display: block; }
   font-size: 16px;
   color: var(--gold);
   line-height: 1;
+}
+
+.hero {
+  text-align: center;
+  padding: 60px 20px 36px;
 }
 
 .hero-content {
@@ -1434,9 +1386,7 @@ img { max-width: 100%; display: block; }
   .nav-row { padding: 14px 18px; gap: 12px; flex-wrap: wrap; }
   .logo-sub { display: none; }
   .nav-links a { padding: 0 12px; }
-  .hero-pane-inner { padding: 28px 16px 24px; }
-  .hero.hero-pane .hero-pane-inner { padding-top: 36px; padding-bottom: 36px; }
-  .home-split { max-height: calc(100vh - 60px); }
+  .hero { padding: 48px 8px 28px; }
   .book-detail-split {
     grid-template-columns: 1fr;
     max-height: none;
