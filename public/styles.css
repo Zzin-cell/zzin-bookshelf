@@ -148,6 +148,129 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
+/* ====== Modal (新建文章) ====== */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(26, 31, 36, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 200;
+  padding: 24px;
+  animation: modal-fade-in 140ms ease-out;
+}
+@keyframes modal-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.modal-card {
+  background: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 640px;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px 14px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.modal-head h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 19px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink-deep);
+}
+.modal-close {
+  background: none;
+  border: 0;
+  font-size: 24px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0 6px;
+  border-radius: 4px;
+}
+.modal-close:hover { color: var(--ink); background: var(--paper); }
+.modal-body {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 24px 22px;
+  overflow-y: auto;
+}
+.modal-body .field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+.modal-body .field > span:first-child {
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+.modal-body input,
+.modal-body textarea {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+.modal-body input:focus,
+.modal-body textarea:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(192, 138, 62, 0.18);
+}
+.modal-body textarea {
+  font-family: var(--font-mono, "SFMono-Regular", "Consolas", monospace);
+  line-height: 1.55;
+  resize: vertical;
+  min-height: 220px;
+}
+.modal-hint {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  background: var(--paper);
+  border: 1px dashed var(--line-soft);
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+.modal-status {
+  margin-top: 4px;
+  font-size: 12.5px;
+  min-height: 18px;
+}
+.modal-status.pending { color: var(--ink-soft); }
+.modal-status.ok      { color: #2e7d4d; }
+.modal-status.error   { color: #b33a3a; }
+
 /* ====== More (技术文档 / 笔记) ====== */
 
 .more-groups {

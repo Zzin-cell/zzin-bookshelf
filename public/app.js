@@ -370,15 +370,16 @@ function renderMore() {
   const cats = state.more || [];
   const total = cats.reduce((s, c) => s + (c.articles || []).length, 0);
   app.innerHTML = `
-    <div style="margin-bottom:24px">
-      <div class="section-head">
+    <div style="margin-bottom:24px; display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap">
+      <div class="section-head" style="margin-bottom:0">
         <h2>更多</h2>
         <p class="lead">微信读书以外的内容:技术课程笔记、动手学习小感悟等。所有 .md 放在 Obsidian vault 的 <code>more/&lt;分类&gt;/</code> 目录里自动同步。</p>
       </div>
+      <button class="btn btn-primary" id="new-article-btn">✚ 新建文章</button>
     </div>
 
     ${cats.length === 0
-      ? `<div class="empty-state">还没有内容。打开 Obsidian,在 vault 根目录建 <code>more/</code>,加一个分类子目录(如 <code>动手学习小感悟</code>),放 .md 进去就行。watcher 会自动重建。</div>`
+      ? `<div class="empty-state">还没有内容。点击右上角「✚ 新建文章」写第一篇,或者打开 Obsidian 在 vault 根目录建 <code>more/</code> 子目录放 .md 进去。</div>`
       : `<div class="more-groups">
           ${cats.map(cat => `
             <section class="more-group">
@@ -406,6 +407,97 @@ function renderMore() {
           <p class="more-foot">共 ${cats.length} 个分类 · ${total} 篇文章</p>
         </div>`}
   `;
+
+  const newBtn = document.getElementById("new-article-btn");
+  if (newBtn) newBtn.addEventListener("click", () => openNewArticleModal());
+}
+
+function openNewArticleModal() {
+  const cats = state.more || [];
+  const catOptions = cats.map(c => `<option value="${escapeHtml(c.category)}">${escapeHtml(c.category)}</option>`).join("");
+  const modal = document.createElement("div");
+  modal.className = "modal-backdrop";
+  modal.id = "new-article-modal";
+  modal.innerHTML = `
+    <div class="modal-card" role="dialog" aria-labelledby="new-article-title">
+      <header class="modal-head">
+        <h2 id="new-article-title">新建文章</h2>
+        <button class="modal-close" type="button" aria-label="关闭">×</button>
+      </header>
+      <form id="new-article-form" class="modal-body">
+        <label class="field">
+          <span>分类(可填已有的或新分类)</span>
+          <input list="more-existing-cats" name="category" required placeholder="动手学习小感悟 / 极客时间 / 新分类名…" />
+          <datalist id="more-existing-cats">${catOptions}</datalist>
+        </label>
+        <label class="field">
+          <span>标题</span>
+          <input name="title" required placeholder="这篇笔记叫什么?" />
+        </label>
+        <label class="field">
+          <span>标签(逗号分隔,可选)</span>
+          <input name="tags" placeholder="redis, 缓存, 数据结构" />
+        </label>
+        <label class="field">
+          <span>正文(markdown)</span>
+          <textarea name="body" required rows="14" placeholder="## 标题&#10;&#10;写点什么..."></textarea>
+        </label>
+        <p class="modal-hint">提交后会写入 Obsidian vault <code>more/&lt;分类&gt;/&lt;slug&gt;.md</code>,并立刻出现在「更多」页。仅在本地 dev server 有效,公网只读。</p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-action="cancel">取消</button>
+          <button type="submit" class="btn btn-primary" data-action="submit">发布</button>
+        </div>
+        <div class="modal-status" id="new-article-status"></div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  const close = () => modal.remove();
+  modal.querySelector(".modal-close").addEventListener("click", close);
+  modal.querySelector("[data-action=cancel]").addEventListener("click", close);
+  modal.addEventListener("click", (e) => { if (e.target === modal) close(); });
+
+  const form = modal.querySelector("#new-article-form");
+  const status = modal.querySelector("#new-article-status");
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(form).entries());
+    const tags = (data.tags || "").toString().split(/[,，]/).map(t => t.trim()).filter(Boolean);
+    status.textContent = "提交中…";
+    status.className = "modal-status pending";
+    try {
+      const r = await fetch("/api/more/articles", {
+        method: "POST",
+        headers: { "Content-Type": "application/json; charset=utf-8" },
+        body: JSON.stringify({
+          category: (data.category || "").toString().trim(),
+          title: (data.title || "").toString().trim(),
+          body: (data.body || "").toString(),
+          tags,
+        }),
+      });
+      const json = await r.json().catch(() => ({}));
+      if (!r.ok || !json.ok) {
+        status.textContent = "❌ 失败:" + (json.error || r.statusText);
+        status.className = "modal-status error";
+        return;
+      }
+      status.textContent = "✅ 已发布,跳转中…";
+      status.className = "modal-status ok";
+      // refresh more.json in-memory + navigate to the new article
+      state.more = json.data || state.more;
+      setTimeout(() => {
+        close();
+        const cat = encodeURIComponent(json.category);
+        const slug = encodeURIComponent(json.slug);
+        location.hash = `#/more/${cat}/${slug}`;
+      }, 600);
+    } catch (err) {
+      status.textContent = "❌ 网络错误:" + (err && err.message || err);
+      status.className = "modal-status error";
+    }
+  });
 }
 
 function renderMoreArticle(categoryKey, articleSlug) {
