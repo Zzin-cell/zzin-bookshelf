@@ -34,9 +34,12 @@ VAULT = Path(r"C:\Users\MR\Documents\Obsidian Vault")
 HERE = Path(__file__).parent
 ROOT = HERE.parent
 PARSE_SCRIPT = HERE / "parse_books.py"
+PARSE_MORE_SCRIPT = HERE / "parse_more.py"
 DATA_JSON = ROOT / "data" / "books.json"
+DATA_MORE_JSON = ROOT / "data" / "more.json"
 SUMMARY_JSON = ROOT / "data" / "books_with_summaries.json"
 PUBLIC_JSON = ROOT / "public" / "data" / "books.json"
+PUBLIC_MORE_JSON = ROOT / "public" / "data" / "more.json"
 LOG_FILE = ROOT / "data" / "watcher.log"
 
 DEBOUNCE_S = 2.0
@@ -86,8 +89,9 @@ def merge_summaries() -> tuple[int, int]:
 
 
 def rebuild() -> None:
-    log("change detected → rebuilding books.json")
+    log("change detected → rebuilding books.json + more.json")
     try:
+        # Books (WeRead)
         result = subprocess.run(
             [sys.executable, str(PARSE_SCRIPT)],
             capture_output=True, text=True,
@@ -95,13 +99,27 @@ def rebuild() -> None:
             cwd=str(ROOT), timeout=30,
         )
         if result.returncode != 0:
-            log(f"  parse FAILED: {result.stderr.strip()[:200]}")
-            return
-        total, with_sum = merge_summaries()
-        PUBLIC_JSON.parent.mkdir(parents=True, exist_ok=True)
-        shutil.copy(DATA_JSON, PUBLIC_JSON)
-        size_kb = PUBLIC_JSON.stat().st_size // 1024
-        log(f"  ok → public/data/books.json ({size_kb} KB, {with_sum}/{total} chapters with summary)")
+            log(f"  parse_books FAILED: {result.stderr.strip()[:200]}")
+        else:
+            total, with_sum = merge_summaries()
+            PUBLIC_JSON.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy(DATA_JSON, PUBLIC_JSON)
+            size_kb = PUBLIC_JSON.stat().st_size // 1024
+            log(f"  books ok → public/data/books.json ({size_kb} KB, {with_sum}/{total} chapters with summary)")
+
+        # More (技术文档 etc.)
+        result = subprocess.run(
+            [sys.executable, str(PARSE_MORE_SCRIPT)],
+            capture_output=True, text=True,
+            encoding="utf-8", errors="replace",
+            cwd=str(ROOT), timeout=30,
+        )
+        if result.returncode != 0:
+            log(f"  parse_more FAILED: {result.stderr.strip()[:200]}")
+        else:
+            log("  more ok → public/data/more.json")
+
+        total, with_sum = 0, 0  # placeholder so existing logging below still works
 
         # Write "chapters that still need an AI summary" todo for Mavis to fill in.
         books = json.loads(DATA_JSON.read_text(encoding="utf-8"))
@@ -147,22 +165,30 @@ def rebuild() -> None:
 class MdHandler(FileSystemEventHandler):
     def __init__(self):
         self.last_ts = 0.0
-        self.pending = False
+        self.pending_more = False
+        self.pending_books = False
 
     def on_modified(self, event):
+        self._on_event(event)
+
+    def on_created(self, event):
+        self._on_event(event)
+
+    def _on_event(self, event):
         if event.is_directory:
             return
         if not event.src_path.lower().endswith(".md"):
             return
         rel = os.path.relpath(event.src_path, str(VAULT))
-        if rel.startswith(".") or os.sep in rel:
-            # ignore dotfile dirs (.obsidian/.trash) and any subdir
+        if rel.startswith("."):
+            # ignore .obsidian, .trash etc.
             return
-        self.pending = True
+        # Decide which pipeline to rebuild based on where the change is.
+        if rel.startswith("more" + os.sep) or rel == "more":
+            self.pending_more = True
+        else:
+            self.pending_books = True
         self.last_ts = time.time()
-
-    def on_created(self, event):
-        self.on_modified(event)
 
 
 def main() -> int:
@@ -177,16 +203,19 @@ def main() -> int:
 
     handler = MdHandler()
     observer = Observer()
-    observer.schedule(handler, str(VAULT), recursive=False)
+    # recursive=True so more/ subdir notes trigger rebuilds too.
+    observer.schedule(handler, str(VAULT), recursive=True)
     observer.start()
 
     try:
-        # Initial rebuild so public/data/books.json is fresh on startup.
+        # Initial rebuild so public/data/books.json + more.json are fresh on startup.
         rebuild()
         while True:
             time.sleep(0.2)
-            if handler.pending and (time.time() - handler.last_ts) > DEBOUNCE_S:
-                handler.pending = False
+            if (handler.pending_more or handler.pending_books) and \
+                    (time.time() - handler.last_ts) > DEBOUNCE_S:
+                handler.pending_more = False
+                handler.pending_books = False
                 rebuild()
     except KeyboardInterrupt:
         log("stopping...")

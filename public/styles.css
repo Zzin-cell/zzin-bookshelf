@@ -148,6 +148,202 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
+/* ====== More (技术文档 / 笔记) ====== */
+
+.more-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  max-width: 920px;
+  margin: 0 auto;
+}
+.more-group {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper-card);
+  box-shadow: var(--shadow-1);
+  padding: 22px 26px 24px;
+}
+.more-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.more-group-head h3 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  flex: 1;
+}
+.more-emoji { font-size: 18px; }
+.more-count {
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.04em;
+}
+.more-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+.more-list li + li { border-top: 1px dashed var(--line-soft); }
+.more-link {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 4px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+.more-link:hover {
+  background: rgba(192, 138, 62, 0.05);
+  transform: translateX(2px);
+}
+.more-link-title {
+  font-family: var(--font-serif);
+  font-size: 17px;
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: -0.005em;
+}
+.more-link:hover .more-link-title { color: var(--accent); }
+.more-link-summary {
+  font-size: 13px;
+  color: var(--ink-soft);
+  line-height: 1.55;
+}
+.more-link-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+}
+.more-tags { display: inline-flex; gap: 6px; flex-wrap: wrap; }
+.more-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  color: var(--ink-soft);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.more-foot {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+/* ====== More article (detail) ====== */
+
+.more-article {
+  max-width: 760px;
+  margin: 0 auto;
+  background: var(--paper-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-1);
+  padding: 36px 44px 48px;
+}
+.more-article-head {
+  border-bottom: 1px solid var(--line-soft);
+  padding-bottom: 18px;
+  margin-bottom: 24px;
+}
+.more-article-eyebrow {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
+.more-article-head h1 {
+  margin: 0 0 10px;
+  font-family: var(--font-serif);
+  font-size: 30px;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+  color: var(--ink-deep);
+}
+.more-article-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+/* Markdown body styling (rendered server-side by python-markdown) */
+.markdown-body { font-family: var(--font-serif); line-height: 1.78; color: var(--ink); font-size: 16px; }
+.markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4 {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  color: var(--ink-deep);
+  letter-spacing: -0.01em;
+  margin: 1.6em 0 0.6em;
+}
+.markdown-body h1 { font-size: 26px; }
+.markdown-body h2 { font-size: 22px; border-bottom: 1px solid var(--line-soft); padding-bottom: 6px; }
+.markdown-body h3 { font-size: 18px; }
+.markdown-body h4 { font-size: 16px; }
+.markdown-body p { margin: 0 0 1em; }
+.markdown-body ul, .markdown-body ol { margin: 0 0 1em; padding-left: 1.5em; }
+.markdown-body li { margin: 0.3em 0; }
+.markdown-body code {
+  font-family: var(--font-sans);
+  background: var(--paper);
+  border: 1px solid var(--line-soft);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.9em;
+}
+.markdown-body pre {
+  background: #1a1f24;
+  color: #e6e3d8;
+  padding: 16px 18px;
+  border-radius: 8px;
+  overflow-x: auto;
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 1em 0;
+}
+.markdown-body pre code {
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}
+.markdown-body blockquote {
+  border-left: 3px solid var(--gold);
+  padding: 4px 14px;
+  margin: 1em 0;
+  color: var(--ink-soft);
+  background: rgba(192, 138, 62, 0.05);
+  border-radius: 0 4px 4px 0;
+}
+.markdown-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+.markdown-body hr { border: none; border-top: 1px dashed var(--line); margin: 2em 0; }
+.markdown-body table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+.markdown-body th, .markdown-body td { border: 1px solid var(--line-soft); padding: 8px 10px; text-align: left; }
+.markdown-body th { background: var(--paper); font-weight: 500; }
+
 /* ====== Home — single stack layout ======
    Hero (简介) on top, gold divider, then content (藏书数据) below.
    No panes, no independent scroll — just page-level flow. */

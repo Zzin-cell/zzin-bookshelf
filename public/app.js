@@ -6,11 +6,13 @@
    ---------------------------------------------------------------- */
 
 const DATA_URL = "data/books.json";
+const MORE_URL = "data/more.json";
 const ABOUT_URL = "data/about.json";
 const app = document.getElementById("app");
 
 const state = {
   books: [],
+  more: [],
   about: null,
   takes: null,
   filter: { q: "", category: "all", status: "all" },
@@ -358,6 +360,81 @@ function renderBookCard(book) {
         <span class="book-progress ${finished ? "finished" : ""}">${prog}</span>
       </div>
     </a>
+  `;
+}
+
+// ---------- view: MORE (技术文档 / 笔记 etc.) ----------
+
+function renderMore() {
+  setActiveNav("more");
+  const cats = state.more || [];
+  const total = cats.reduce((s, c) => s + (c.articles || []).length, 0);
+  app.innerHTML = `
+    <div style="margin-bottom:24px">
+      <div class="section-head">
+        <h2>更多</h2>
+        <p class="lead">微信读书以外的内容:技术课程笔记、动手学习小感悟等。所有 .md 放在 Obsidian vault 的 <code>more/&lt;分类&gt;/</code> 目录里自动同步。</p>
+      </div>
+    </div>
+
+    ${cats.length === 0
+      ? `<div class="empty-state">还没有内容。打开 Obsidian,在 vault 根目录建 <code>more/</code>,加一个分类子目录(如 <code>动手学习小感悟</code>),放 .md 进去就行。watcher 会自动重建。</div>`
+      : `<div class="more-groups">
+          ${cats.map(cat => `
+            <section class="more-group">
+              <header class="more-group-head">
+                <span class="more-emoji">${escapeHtml(cat.categoryEmoji || "📄")}</span>
+                <h3>${escapeHtml(cat.category)}</h3>
+                <span class="more-count">${(cat.articles || []).length} 篇</span>
+              </header>
+              <ul class="more-list">
+                ${(cat.articles || []).map(a => `
+                  <li>
+                    <a class="more-link" href="#/more/${encodeURIComponent(cat.categoryKey)}/${encodeURIComponent(a.slug)}">
+                      <span class="more-link-title">${escapeHtml(a.title)}</span>
+                      ${a.summary ? `<span class="more-link-summary">${escapeHtml(a.summary)}</span>` : ""}
+                      <span class="more-link-meta">
+                        ${a.updatedAt ? `<span>更新 ${escapeHtml(a.updatedAt)}</span>` : ""}
+                        ${a.tags && a.tags.length ? `<span class="more-tags">${a.tags.map(t => `<span class="more-tag">#${escapeHtml(t)}</span>`).join(" ")}</span>` : ""}
+                      </span>
+                    </a>
+                  </li>
+                `).join("")}
+              </ul>
+            </section>
+          `).join("")}
+          <p class="more-foot">共 ${cats.length} 个分类 · ${total} 篇文章</p>
+        </div>`}
+  `;
+}
+
+function renderMoreArticle(categoryKey, articleSlug) {
+  setActiveNav("more");
+  const cat = (state.more || []).find(c => c.categoryKey === categoryKey);
+  if (!cat) {
+    app.innerHTML = `<div class="empty-state">分类「${escapeHtml(categoryKey)}」不存在。<a href="#/more">回到更多</a></div>`;
+    return;
+  }
+  const a = (cat.articles || []).find(x => x.slug === articleSlug);
+  if (!a) {
+    app.innerHTML = `<div class="empty-state">「${escapeHtml(articleSlug)}」没在「${escapeHtml(cat.category)}」里。<a href="#/more">回到更多</a></div>`;
+    return;
+  }
+  app.innerHTML = `
+    <div style="margin-bottom:18px">
+      <a class="btn btn-ghost" href="#/more">← ${escapeHtml(cat.categoryEmoji || "")} ${escapeHtml(cat.category)}</a>
+    </div>
+    <article class="more-article">
+      <header class="more-article-head">
+        <div class="more-article-eyebrow">${escapeHtml(cat.categoryEmoji || "📄")} ${escapeHtml(cat.category)}</div>
+        <h1>${escapeHtml(a.title)}</h1>
+        <div class="more-article-meta">
+          ${a.updatedAt ? `<span>更新 ${escapeHtml(a.updatedAt)}</span>` : ""}
+          ${a.tags && a.tags.length ? `<span class="more-tags">${a.tags.map(t => `<span class="more-tag">#${escapeHtml(t)}</span>`).join(" ")}</span>` : ""}
+        </div>
+      </header>
+      <div class="more-article-body markdown-body">${a.html || `<p>${escapeHtml(a.summary || "")}</p>`}</div>
+    </article>
   `;
 }
 
@@ -804,6 +881,11 @@ function route() {
   if (parts.length === 0) return renderHome();
   if (parts[0] === "books") return renderBooks();
   if (parts[0] === "recommend") return renderRecommend();
+  if (parts[0] === "more") {
+    if (parts[1] && parts[2]) return renderMoreArticle(decodeURIComponent(parts[1]), decodeURIComponent(parts[2]));
+    if (parts[1]) return renderMoreArticle(decodeURIComponent(parts[1]), "");
+    return renderMore();
+  }
   if (parts[0] === "about") return renderAbout();
   if (parts[0] === "book" && parts[1]) return renderBook(decodeURIComponent(parts[1]));
   renderHome();
@@ -813,11 +895,17 @@ function route() {
 
 async function boot() {
   try {
-    const [booksRes, aboutRes] = await Promise.all([
+    const [booksRes, moreRes, aboutRes] = await Promise.all([
       fetch(DATA_URL),
+      fetch(MORE_URL).catch(() => null),
       fetch(ABOUT_URL).catch(() => null),
     ]);
     state.books = await booksRes.json();
+    if (moreRes && moreRes.ok) {
+      try { state.more = await moreRes.json(); } catch (_) { state.more = []; }
+    } else {
+      state.more = [];
+    }
     if (aboutRes && aboutRes.ok) {
       try { state.about = await aboutRes.json(); } catch (_) { state.about = null; }
     }
