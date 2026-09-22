@@ -39,7 +39,7 @@ PORT = int(os.environ.get("DEV_PORT", "8765"))
 # web UI. Set via env var if you want a custom one; default is a stable
 # local-only string so the dev server can refuse writes from curious
 # visitors even when the page is open in a shared browser.
-LOCAL_DEV_PASSWORD = os.environ.get("LOCAL_DEV_PASSWORD", "zhangzining")
+LOCAL_DEV_PASSWORD = os.environ.get("LOCAL_DEV_PASSWORD", "zzin0715")
 
 
 def slugify(s: str) -> str:
