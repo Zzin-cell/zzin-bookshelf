@@ -13,7 +13,7 @@
           "源码"
         ],
         "updatedAt": "2025-10-02",
-        "mtime": 1790052977,
+        "mtime": 1790055315,
         "sizeBytes": 1177,
         "html": "<blockquote>\n<p>这是一篇示范文章,你可以删掉它,在 Obsidian 里换上自己真正想保留的笔记。</p>\n</blockquote>\n<h2 id=\"main\">别从 main 函数开始</h2>\n<p>老手读源码的顺序是:\n1. 找 <strong>README / Architecture 文档</strong> 先看图\n2. 找 <strong>测试用例</strong>,看期望行为\n3. 找 <strong>数据结构定义</strong> (struct / class),看状态\n4. 最后才是入口函数</p>\n<h2 id=\"print-10\">调试器比 print 强 10 倍</h2>\n<ul>\n<li>学会下断点</li>\n<li>学会 watch 表达式</li>\n<li>学会 conditional breakpoint(<code>x &gt; 100</code> 才停)</li>\n<li>学会 step into / step over</li>\n</ul>\n<p><code>pdb</code> / <code>gdb</code> / <code>lldb</code> / <code>Chrome DevTools</code> 都一样。</p>\n<h2 id=\"_1\">画图,别只读</h2>\n<p>每读完一个模块,花 5 分钟画个数据流图(可以手画或 mermaid):</p>\n<pre><code class=\"language-mermaid\">graph LR\n  A[Client] --&gt; B[Acceptor]\n  B --&gt; C[Worker pool]\n  C --&gt; D[Storage]\n</code></pre>\n<p>下周再回来看这张图,会发现漏了一半。</p>\n<h2 id=\"_2\">实在读不下去就换</h2>\n<ul>\n<li>文档差的库:换文档好的 fork</li>\n<li>巨无霸代码(&gt; 50w 行):从 RFC 入手,别看代码</li>\n<li>看不懂的设计:先看 git log,找作者当年的 issue 讨论</li>\n</ul>\n<hr>\n<p>读源码是<strong>回报率最高</strong>的硬技能。三年下来能拉开跟同事 2-3 倍的差距。</p>",
         "srcPath": "Obsidian Vault\\more\\动手学习小感悟\\读源码的小窍门.md"
