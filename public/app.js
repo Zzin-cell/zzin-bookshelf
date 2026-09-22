@@ -432,21 +432,19 @@ function renderMore() {
       const li = btn.closest(".more-list-item");
       const titleEl = li && li.querySelector(".more-link-title");
       const title = titleEl ? titleEl.textContent : slug;
-      btn.disabled = true;
-      btn.textContent = "…";
       if (!isLocalDev()) {
-        setTimeout(() => {
-          btn.disabled = false;
-          btn.textContent = "×";
-          showReadOnlyNotice("删除文章");
-        }, 100);
+        showReadOnlyNotice("删除文章");
         return;
       }
+      const password = window.prompt(`删除「${title}」需要本地 dev 密码:`);
+      if (password === null) return; // user cancelled
+      btn.disabled = true;
+      btn.textContent = "…";
       try {
         const r = await fetch("/api/more/articles/delete", {
           method: "POST",
           headers: { "Content-Type": "application/json; charset=utf-8" },
-          body: JSON.stringify({ category: cat, slug }),
+          body: JSON.stringify({ category: cat, slug, password }),
         });
         const json = await r.json().catch(() => ({}));
         if (!r.ok || !json.ok) {
@@ -550,6 +548,10 @@ function openNewArticleModal() {
           <span>正文(markdown)</span>
           <textarea name="body" rows="14" placeholder="## 标题&#10;&#10;写点什么..."></textarea>
         </label>
+        <label class="field field-password">
+          <span>本地密码 <span class="field-password-hint">(dev 模式防误操作,在 serve.py 的 LOCAL_DEV_PASSWORD 配置)</span></span>
+          <input name="password" type="password" autocomplete="off" placeholder="本地 dev 密码" />
+        </label>
         <p class="modal-hint">提交后会写入 Obsidian vault <code>more/&lt;分类&gt;/&lt;slug&gt;.md</code>,并立刻出现在「更多」页。仅在本地 dev server 有效,公网只读。</p>
         <div class="modal-actions">
           <button type="button" class="btn btn-ghost" data-action="cancel">取消</button>
@@ -575,6 +577,7 @@ function openNewArticleModal() {
     title: form.querySelector('input[name="title"]'),
     tags: form.querySelector('input[name="tags"]'),
     body: form.querySelector('textarea[name="body"]'),
+    password: form.querySelector('input[name="password"]'),
   };
   Object.entries(fields).forEach(([name, el]) => {
     el.addEventListener("input", () => {
@@ -612,6 +615,7 @@ function openNewArticleModal() {
           title: (data.title || "").toString().trim(),
           body: (data.body || "").toString(),
           tags,
+          password: (data.password || "").toString(),
         }),
       });
       const json = await r.json().catch(() => ({}));
@@ -670,6 +674,10 @@ function validateField(name, value) {
     if (v.length > 200_000) return "正文太长(≤ 200,000 字符)";
     return "";
   }
+  if (name === "password") {
+    if (!v) return "请输入本地 dev 密码";
+    return "";
+  }
   return "";
 }
 
@@ -715,11 +723,13 @@ function renderMoreArticle(categoryKey, articleSlug) {
         `将从 Obsidian vault 永久删除 <code>${escapeHtml(cat.category)}/${escapeHtml(a.slug)}.md</code>,此操作无法撤销。`,
         "确认删除",
         async () => {
+          const password = window.prompt("请输入本地 dev 密码:");
+          if (password === null) return; // cancelled
           try {
             const r = await fetch("/api/more/articles/delete", {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
-              body: JSON.stringify({ category: cat.category, slug: a.slug }),
+              body: JSON.stringify({ category: cat.category, slug: a.slug, password }),
             });
             const json = await r.json().catch(() => ({}));
             if (!r.ok || !json.ok) {

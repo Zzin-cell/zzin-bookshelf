@@ -35,6 +35,12 @@ PARSE_MORE = HERE / "parse_more.py"
 
 PORT = int(os.environ.get("DEV_PORT", "8765"))
 
+# Master password required to create / delete articles from the public
+# web UI. Set via env var if you want a custom one; default is a stable
+# local-only string so the dev server can refuse writes from curious
+# visitors even when the page is open in a shared browser.
+LOCAL_DEV_PASSWORD = os.environ.get("LOCAL_DEV_PASSWORD", "zhangzining")
+
 
 def slugify(s: str) -> str:
     s = s.strip()
@@ -131,9 +137,16 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             raise ValueError(f"invalid JSON: {e}")
 
+    def _check_password(self, data: dict) -> None:
+        """Verify the dev-only master password. Raises on mismatch."""
+        pwd = (data.get("password") or "").strip()
+        if pwd != LOCAL_DEV_PASSWORD:
+            raise PermissionError("密码错误(或本地密码未设置)")
+
     def handle_create_article(self) -> None:
         try:
             data = self._read_json_body()
+            self._check_password(data)
             category = (data.get("category") or "").strip()
             title = (data.get("title") or "").strip()
             body = (data.get("body") or "").strip()
@@ -170,6 +183,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def handle_delete_article(self) -> None:
         try:
             data = self._read_json_body()
+            self._check_password(data)
             category = (data.get("category") or "").strip()
             slug = (data.get("slug") or "").strip()
             if not category or not slug:
