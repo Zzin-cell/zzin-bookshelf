@@ -375,7 +375,7 @@ function renderMore() {
         <h2>更多</h2>
         <p class="lead">微信读书以外的内容:技术课程笔记、动手学习小感悟等。所有 .md 放在 Obsidian vault 的 <code>more/&lt;分类&gt;/</code> 目录里自动同步。</p>
       </div>
-      <button class="btn btn-primary" id="new-article-btn">✚ 新建文章</button>
+      <button class="btn btn-primary" id="new-article-btn"${isLocalDev() ? "" : " disabled title=\"公网只读,在本地 dev 才能新建\""}>✚ 新建文章</button>
     </div>
 
     ${cats.length === 0
@@ -399,7 +399,7 @@ function renderMore() {
                         ${a.tags && a.tags.length ? `<span class="more-tags">${a.tags.map(t => `<span class="more-tag">#${escapeHtml(t)}</span>`).join(" ")}</span>` : ""}
                       </span>
                     </a>
-                    <button class="more-item-x" type="button" data-cat="${escapeHtml(cat.category)}" data-slug="${escapeHtml(a.slug)}" aria-label="删除 ${escapeHtml(a.title)}">×</button>
+                    <button class="more-item-x" type="button" data-cat="${escapeHtml(cat.category)}" data-slug="${escapeHtml(a.slug)}" aria-label="删除 ${escapeHtml(a.title)}"${isLocalDev() ? "" : " disabled title=\"公网只读,在本地 dev 才能删除\""}>×</button>
                   </li>
                 `).join("")}
               </ul>
@@ -498,6 +498,8 @@ function isLocalDev() {
 function showReadOnlyNotice(action) {
   alert(`${action} 只在本地 dev 模式可用(需用 python scripts/serve.py 启动)。\n\n当前是公网,操作不能持久化。`);
 }
+
+function showUndoToast(message, onUndo) {
   let bar = document.getElementById("more-undo-toast");
   if (bar) bar.remove();
   bar = document.createElement("div");
@@ -621,7 +623,7 @@ function renderMoreArticle(categoryKey, articleSlug) {
   app.innerHTML = `
     <div class="more-article-toolbar">
       <a class="btn btn-ghost" href="#/more">← ${escapeHtml(cat.categoryEmoji || "")} ${escapeHtml(cat.category)}</a>
-      <button class="btn btn-ghost btn-danger" id="more-delete-btn" title="从 Obsidian vault 永久删除这篇文章">🗑 删除</button>
+      <button class="btn btn-ghost btn-danger" id="more-delete-btn"${isLocalDev() ? ' title="从 Obsidian vault 永久删除这篇文章"' : ' disabled title="公网只读,在本地 dev 才能删除"'}>🗑 删除</button>
     </div>
     <article class="more-article">
       <header class="more-article-head">

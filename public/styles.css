@@ -148,6 +148,23 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
+/* ====== Read-only (public deploy) state ======
+   When the static deploy is open at *.mcode.cn, write buttons are
+   rendered with `disabled` and a tooltip. */
+.btn:disabled,
+button:disabled,
+.more-item-x:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: saturate(0.6);
+}
+.btn:disabled:hover,
+.more-item-x:disabled:hover {
+  background: transparent;
+  color: inherit;
+  transform: none;
+}
+
 /* ====== More article toolbar (back + delete) ====== */
 .more-list-item {
   position: relative;
