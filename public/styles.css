@@ -349,6 +349,16 @@ button:disabled,
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(192, 138, 62, 0.18);
 }
+.modal-body input.field-invalid,
+.modal-body textarea.field-invalid {
+  border-color: #b33a3a;
+  background: rgba(179, 58, 58, 0.04);
+}
+.modal-body input.field-invalid:focus,
+.modal-body textarea.field-invalid:focus {
+  border-color: #b33a3a;
+  box-shadow: 0 0 0 3px rgba(179, 58, 58, 0.18);
+}
 .modal-body textarea {
   font-family: var(--font-mono, "SFMono-Regular", "Consolas", monospace);
   line-height: 1.55;

@@ -532,15 +532,15 @@ function openNewArticleModal() {
         <h2 id="new-article-title">新建文章</h2>
         <button class="modal-close" type="button" aria-label="关闭">×</button>
       </header>
-      <form id="new-article-form" class="modal-body">
+      <form id="new-article-form" class="modal-body" novalidate>
         <label class="field">
           <span>分类(可填已有的或新分类)</span>
-          <input list="more-existing-cats" name="category" required placeholder="动手学习小感悟 / 极客时间 / 新分类名…" />
+          <input list="more-existing-cats" name="category" placeholder="动手学习小感悟 / 极客时间 / 新分类名…" />
           <datalist id="more-existing-cats">${catOptions}</datalist>
         </label>
         <label class="field">
           <span>标题</span>
-          <input name="title" required placeholder="这篇笔记叫什么?" />
+          <input name="title" placeholder="这篇笔记叫什么?" />
         </label>
         <label class="field">
           <span>标签(逗号分隔,可选)</span>
@@ -548,7 +548,7 @@ function openNewArticleModal() {
         </label>
         <label class="field">
           <span>正文(markdown)</span>
-          <textarea name="body" required rows="14" placeholder="## 标题&#10;&#10;写点什么..."></textarea>
+          <textarea name="body" rows="14" placeholder="## 标题&#10;&#10;写点什么..."></textarea>
         </label>
         <p class="modal-hint">提交后会写入 Obsidian vault <code>more/&lt;分类&gt;/&lt;slug&gt;.md</code>,并立刻出现在「更多」页。仅在本地 dev server 有效,公网只读。</p>
         <div class="modal-actions">
@@ -568,9 +568,38 @@ function openNewArticleModal() {
 
   const form = modal.querySelector("#new-article-form");
   const status = modal.querySelector("#new-article-status");
+  // Wire live validation feedback on every input so users see field-level
+  // problems as they type, not just on submit.
+  const fields = {
+    category: form.querySelector('input[name="category"]'),
+    title: form.querySelector('input[name="title"]'),
+    tags: form.querySelector('input[name="tags"]'),
+    body: form.querySelector('textarea[name="body"]'),
+  };
+  Object.entries(fields).forEach(([name, el]) => {
+    el.addEventListener("input", () => {
+      const err = validateField(name, el.value);
+      el.classList.toggle("field-invalid", !!err);
+      el.setCustomValidity(err || "");
+    });
+  });
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(form).entries());
+    // Full validation pass — collect every field-level error first,
+    // then if any fail, surface them all in the status line so the
+    // user fixes everything in one round-trip instead of trial-and-error.
+    const allErrors = Object.entries(fields)
+      .map(([name, el]) => [name, validateField(name, el.value)])
+      .filter(([, err]) => err);
+    if (allErrors.length) {
+      const lines = allErrors.map(([name, err]) => `• ${name}: ${err}`).join("\n");
+      status.textContent = "❌ 校验未通过:\n" + lines;
+      status.className = "modal-status error";
+      // focus the first invalid field for quick correction
+      fields[allErrors[0][0]].focus();
+      return;
+    }
     const tags = (data.tags || "").toString().split(/[,，]/).map(t => t.trim()).filter(Boolean);
     status.textContent = "提交中…";
     status.className = "modal-status pending";
@@ -606,6 +635,42 @@ function openNewArticleModal() {
       status.className = "modal-status error";
     }
   });
+}
+
+// Field-level validators for the new-article form. Each returns an
+// empty string when the value is OK, or a short Chinese error message
+// when it isn't. These mirror the server-side checks in serve.py so
+// the user gets instant feedback instead of a round-trip 400.
+function validateField(name, value) {
+  const v = (value || "").toString().trim();
+  if (name === "category") {
+    if (!v) return "分类必填,可以是已有的(如 极客时间)或新建";
+    if (v.length > 32) return "分类名太长(≤ 32 字符)";
+    if (/[\\/:*?"<>|]/.test(v)) return "分类名不能含 \\ / : * ? \" < > |";
+    return "";
+  }
+  if (name === "title") {
+    if (!v) return "标题必填";
+    if (v.length < 2) return "标题至少 2 个字符";
+    if (v.length > 100) return "标题太长(≤ 100 字符)";
+    if (/[\\/:*?"<>|]/.test(v)) return "标题不能含 \\ / : * ? \" < > |";
+    return "";
+  }
+  if (name === "tags") {
+    // optional field, only validate if non-empty
+    if (!v) return "";
+    const tags = v.split(/[,，]/).map(t => t.trim()).filter(Boolean);
+    if (tags.length > 12) return "标签太多(≤ 12 个)";
+    if (tags.some(t => t.length > 24)) return "单个标签太长(≤ 24 字符)";
+    return "";
+  }
+  if (name === "body") {
+    if (!v) return "正文必填,markdown 内容";
+    if (v.length < 5) return "正文太短(至少 5 个字符)";
+    if (v.length > 200_000) return "正文太长(≤ 200,000 字符)";
+    return "";
+  }
+  return "";
 }
 
 function renderMoreArticle(categoryKey, articleSlug) {
