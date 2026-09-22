@@ -513,8 +513,9 @@ function renderMoreArticle(categoryKey, articleSlug) {
     return;
   }
   app.innerHTML = `
-    <div style="margin-bottom:18px">
+    <div class="more-article-toolbar">
       <a class="btn btn-ghost" href="#/more">← ${escapeHtml(cat.categoryEmoji || "")} ${escapeHtml(cat.category)}</a>
+      <button class="btn btn-ghost btn-danger" id="more-delete-btn" title="从 Obsidian vault 永久删除这篇文章">🗑 删除</button>
     </div>
     <article class="more-article">
       <header class="more-article-head">
@@ -528,6 +529,57 @@ function renderMoreArticle(categoryKey, articleSlug) {
       <div class="more-article-body markdown-body">${a.html || `<p>${escapeHtml(a.summary || "")}</p>`}</div>
     </article>
   `;
+
+  const delBtn = document.getElementById("more-delete-btn");
+  if (delBtn) {
+    delBtn.addEventListener("click", () => {
+      openConfirmModal(
+        "删除这篇文章?",
+        `将从 Obsidian vault 永久删除 <code>${escapeHtml(cat.category)}/${escapeHtml(a.slug)}.md</code>,此操作无法撤销。`,
+        "确认删除",
+        async () => {
+          try {
+            const r = await fetch("/api/more/articles/delete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json; charset=utf-8" },
+              body: JSON.stringify({ category: cat.category, slug: a.slug }),
+            });
+            const json = await r.json().catch(() => ({}));
+            if (!r.ok || !json.ok) {
+              alert("删除失败:" + (json.error || r.statusText));
+              return;
+            }
+            state.more = json.data || state.more;
+            location.hash = "#/more";
+          } catch (err) {
+            alert("网络错误:" + (err && err.message || err));
+          }
+        }
+      );
+    });
+  }
+}
+
+function openConfirmModal(title, bodyHtml, confirmText, onConfirm) {
+  const m = document.createElement("div");
+  m.className = "modal-backdrop";
+  m.innerHTML = `
+    <div class="modal-card confirm-card" role="alertdialog" aria-labelledby="confirm-title">
+      <header class="modal-head"><h2 id="confirm-title">${escapeHtml(title)}</h2></header>
+      <div class="modal-body"><p>${bodyHtml}</p></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" data-action="cancel">取消</button>
+        <button type="button" class="btn btn-danger-solid" data-action="confirm">${escapeHtml(confirmText)}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  const close = () => m.remove();
+  m.querySelector("[data-action=cancel]").addEventListener("click", close);
+  m.addEventListener("click", (e) => { if (e.target === m) close(); });
+  m.querySelector("[data-action=confirm]").addEventListener("click", async () => {
+    close();
+    try { await onConfirm(); } catch (_) { /* swallow — caller already alerted */ }
+  });
 }
 
 // ---------- view: RECOMMEND ----------

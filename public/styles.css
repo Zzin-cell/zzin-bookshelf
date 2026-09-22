@@ -148,6 +148,34 @@ img { max-width: 100%; display: block; }
   text-align: center;
 }
 
+/* ====== More article toolbar (back + delete) ====== */
+.more-article-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  max-width: 760px;
+  margin: 0 auto 18px;
+}
+.btn-danger { color: #b33a3a; border-color: rgba(179, 58, 58, 0.35); }
+.btn-danger:hover { background: rgba(179, 58, 58, 0.08); border-color: rgba(179, 58, 58, 0.55); color: #8a2a2a; }
+.btn-danger-solid {
+  background: #b33a3a;
+  color: #fff;
+  border: 1px solid #b33a3a;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 18px;
+  min-height: 38px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 140ms ease;
+}
+.btn-danger-solid:hover { background: #8a2a2a; border-color: #8a2a2a; }
+.confirm-card { max-width: 460px; }
+.confirm-card .modal-body p { margin: 0; color: var(--ink-soft); line-height: 1.6; font-size: 14px; }
+
 /* ====== Modal (新建文章) ====== */
 .modal-backdrop {
   position: fixed;

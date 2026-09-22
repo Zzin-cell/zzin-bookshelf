@@ -103,6 +103,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(body)
 
     def do_POST(self) -> None:
+        if self.path.startswith("/api/more/articles/delete"):
+            self.handle_delete_article()
+            return
         if self.path.startswith("/api/more/articles"):
             self.handle_create_article()
             return
@@ -161,6 +164,28 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return
             (VAULT_MORE / name).mkdir(parents=True, exist_ok=True)
             self._json(200, {"ok": True, "category": name})
+        except Exception as e:
+            self._json(500, {"ok": False, "error": str(e)})
+
+    def handle_delete_article(self) -> None:
+        try:
+            data = self._read_json_body()
+            category = (data.get("category") or "").strip()
+            slug = (data.get("slug") or "").strip()
+            if not category or not slug:
+                self._json(400, {"ok": False, "error": "category/slug required"})
+                return
+            md_path = VAULT_MORE / category / f"{slugify(slug)}.md"
+            if not md_path.exists():
+                self._json(404, {"ok": False, "error": f"not found: {md_path}"})
+                return
+            # Refuse to delete anything outside VAULT_MORE — safety net.
+            if not str(md_path.resolve()).startswith(str(VAULT_MORE.resolve())):
+                self._json(403, {"ok": False, "error": "refusing to delete outside vault more/"})
+                return
+            md_path.unlink()
+            rebuild = rebuild_more()
+            self._json(200, {"ok": True, "deleted": str(md_path), "data": rebuild["categories"]})
         except Exception as e:
             self._json(500, {"ok": False, "error": str(e)})
 
