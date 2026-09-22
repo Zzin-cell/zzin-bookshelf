@@ -410,7 +410,13 @@ function renderMore() {
   `;
 
   const newBtn = document.getElementById("new-article-btn");
-  if (newBtn) newBtn.addEventListener("click", () => openNewArticleModal());
+  if (newBtn) newBtn.addEventListener("click", () => {
+    if (!isLocalDev()) {
+      showReadOnlyNotice("新建文章");
+      return;
+    }
+    openNewArticleModal();
+  });
 
   // Inline delete: hover the list item to reveal the small × at the
   // top-right corner. Clicking it deletes the article from the
@@ -428,6 +434,14 @@ function renderMore() {
       const title = titleEl ? titleEl.textContent : slug;
       btn.disabled = true;
       btn.textContent = "…";
+      if (!isLocalDev()) {
+        setTimeout(() => {
+          btn.disabled = false;
+          btn.textContent = "×";
+          showReadOnlyNotice("删除文章");
+        }, 100);
+        return;
+      }
       try {
         const r = await fetch("/api/more/articles/delete", {
           method: "POST",
@@ -473,7 +487,17 @@ function renderMore() {
   });
 }
 
-function showUndoToast(message, onUndo) {
+// Public deploys at *.mcode.cn are static (GET-only) and can't accept
+// POST. Surface a friendly message there instead of letting the
+// browser show a generic "Not Allowed" from the static file server.
+function isLocalDev() {
+  const h = location.hostname;
+  return h === "localhost" || h === "127.0.0.1" || h === "";
+}
+
+function showReadOnlyNotice(action) {
+  alert(`${action} 只在本地 dev 模式可用(需用 python scripts/serve.py 启动)。\n\n当前是公网,操作不能持久化。`);
+}
   let bar = document.getElementById("more-undo-toast");
   if (bar) bar.remove();
   bar = document.createElement("div");
@@ -615,6 +639,10 @@ function renderMoreArticle(categoryKey, articleSlug) {
   const delBtn = document.getElementById("more-delete-btn");
   if (delBtn) {
     delBtn.addEventListener("click", () => {
+      if (!isLocalDev()) {
+        showReadOnlyNotice("删除文章");
+        return;
+      }
       openConfirmModal(
         "删除这篇文章?",
         `将从 Obsidian vault 永久删除 <code>${escapeHtml(cat.category)}/${escapeHtml(a.slug)}.md</code>,此操作无法撤销。`,
