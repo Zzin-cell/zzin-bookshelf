@@ -436,7 +436,11 @@ function renderMore() {
         showReadOnlyNotice("删除文章");
         return;
       }
-      const password = window.prompt(`删除「${title}」需要本地 dev 密码:`);
+      const password = await openPasswordPrompt({
+        title: `删除「${title}」`,
+        hint: `将从 Obsidian vault 永久删除 <code>${escapeHtml(cat)}/${escapeHtml(slug)}.md</code>,此操作无法撤销。`,
+        submitText: "确认删除",
+      });
       if (password === null) return; // user cancelled
       btn.disabled = true;
       btn.textContent = "…";
@@ -723,7 +727,11 @@ function renderMoreArticle(categoryKey, articleSlug) {
         `将从 Obsidian vault 永久删除 <code>${escapeHtml(cat.category)}/${escapeHtml(a.slug)}.md</code>,此操作无法撤销。`,
         "确认删除",
         async () => {
-          const password = window.prompt("请输入本地 dev 密码:");
+          const password = await openPasswordPrompt({
+            title: "删除这篇文章?",
+            hint: `将从 Obsidian vault 永久删除 <code>${escapeHtml(cat.category)}/${escapeHtml(a.slug)}.md</code>,此操作无法撤销。`,
+            submitText: "确认删除",
+          });
           if (password === null) return; // cancelled
           try {
             const r = await fetch("/api/more/articles/delete", {
@@ -766,6 +774,51 @@ function openConfirmModal(title, bodyHtml, confirmText, onConfirm) {
   m.querySelector("[data-action=confirm]").addEventListener("click", async () => {
     close();
     try { await onConfirm(); } catch (_) { /* swallow — caller already alerted */ }
+  });
+}
+
+// In-page password prompt — same visual language as the rest of the
+// modals. Avoids window.prompt() (which some browsers block or that
+// the user can dismiss without realizing it was a real input).
+function openPasswordPrompt({ title, hint, submitText = "确认" }) {
+  return new Promise((resolve) => {
+    const m = document.createElement("div");
+    m.className = "modal-backdrop";
+    m.innerHTML = `
+      <div class="modal-card confirm-card" role="dialog" aria-labelledby="pw-title">
+        <header class="modal-head"><h2 id="pw-title">${escapeHtml(title)}</h2></header>
+        <form class="modal-body" id="pw-form">
+          ${hint ? `<p style="margin:0 0 10px;color:var(--ink-soft);font-size:13.5px;line-height:1.55">${hint}</p>` : ""}
+          <label class="field" style="display:flex;flex-direction:column;gap:4px">
+            <span>本地密码</span>
+            <input name="password" type="password" autocomplete="off" autofocus placeholder="本地 dev 密码" />
+          </label>
+          <p class="modal-hint" style="margin:8px 0 0">密码错误会被服务端拒绝并保持 modal 打开,可重试。</p>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" data-action="cancel">取消</button>
+            <button type="submit" class="btn btn-danger-solid" data-action="submit">${escapeHtml(submitText)}</button>
+          </div>
+          <div class="modal-status" id="pw-status"></div>
+        </form>
+      </div>`;
+    document.body.appendChild(m);
+    const form = m.querySelector("#pw-form");
+    const status = m.querySelector("#pw-status");
+    const close = (value) => { m.remove(); resolve(value); };
+    m.querySelector("[data-action=cancel]").addEventListener("click", () => close(null));
+    m.addEventListener("click", (e) => { if (e.target === m) close(null); });
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const pwd = (form.elements.namedItem("password").value || "").trim();
+      if (!pwd) {
+        status.textContent = "❌ 请输入密码";
+        status.className = "modal-status error";
+        return;
+      }
+      close(pwd);
+    });
+    // Focus the input on next tick so the modal is in the DOM first.
+    setTimeout(() => form.elements.namedItem("password").focus(), 0);
   });
 }
 
