@@ -182,7 +182,10 @@ button:disabled,
   font-size: 16px;
   line-height: 1;
   cursor: pointer;
-  opacity: 0;
+  /* Always visible (but subtle) so users find it without hover;
+     hover lights it up to red. Earlier default opacity:0 was too
+     hidden and confused in-app browser / touch users. */
+  opacity: 0.4;
   transition: opacity 140ms ease, background-color 140ms ease, color 140ms ease, transform 140ms ease;
   display: flex;
   align-items: center;
