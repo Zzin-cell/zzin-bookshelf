@@ -260,6 +260,34 @@ button:disabled,
 .confirm-card { max-width: 460px; }
 .confirm-card .modal-body p { margin: 0; color: var(--ink-soft); line-height: 1.6; font-size: 14px; }
 
+/* ====== Environment banner (local dev vs public) ====== */
+.env-banner {
+  margin: 0 auto 18px;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.55;
+  letter-spacing: 0.01em;
+  border: 1px solid;
+}
+.env-banner code {
+  font-family: var(--font-mono, "SFMono-Regular", "Consolas", monospace);
+  font-size: 12.5px;
+  padding: 0 4px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+}
+.env-banner-dev {
+  background: rgba(192, 138, 62, 0.08);
+  border-color: rgba(192, 138, 62, 0.35);
+  color: #6b4d1f;
+}
+.env-banner-pub {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--line);
+  color: var(--ink-soft);
+}
+
 /* ====== Modal (新建文章) ====== */
 .modal-backdrop {
   position: fixed;

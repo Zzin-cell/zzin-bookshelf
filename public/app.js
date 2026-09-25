@@ -380,7 +380,10 @@ function renderMore() {
 
     ${cats.length === 0
       ? `<div class="empty-state">还没有内容。点击右上角「✚ 新建文章」写第一篇,或者打开 Obsidian 在 vault 根目录建 <code>more/</code> 子目录放 .md 进去。</div>`
-      : `<div class="more-groups">
+      : isLocalDev()
+        ? `<div class="env-banner env-banner-dev">⚙ 本地 dev 模式 — 新建 / 删除按钮可用,需输本地密码 <code>zzin0715</code></div>`
+        : `<div class="env-banner env-banner-pub">🔒 公网只读 — 新建 / 删除按钮已禁用。要写操作请在本地 <code>http://127.0.0.1:8765</code> 跑 <code>scripts/serve.py</code></div>`
+        + `<div class="more-groups">
           ${cats.map(cat => `
             <section class="more-group">
               <header class="more-group-head">
