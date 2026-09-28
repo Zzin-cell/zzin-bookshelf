@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+﻿#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 r"""
 parse_more.py — Parse "more/" Obsidian content → more.json
@@ -15,6 +15,7 @@ innerHTML it directly without a JS markdown lib.
 """
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -163,6 +164,27 @@ def main() -> int:
     n_arts = sum(len(c["articles"]) for c in out)
     size_kb = PUBLIC_JSON.stat().st_size // 1024
     print(f"[parse_more] {n_cats} categories, {n_arts} articles → public/data/more.json ({size_kb} KB)")
+
+    # Mirror non-md assets (images, etc.) from VAULT_MORE into
+    # public/data/more/ so relative image references like
+    # ![alt](sample.png) in obsidian notes resolve when the site is
+    # served. Without this, attachments live only on disk behind
+    # python -m http.server and 404 in the browser. Rooted at
+    # public/data/more/ to mirror the vault more/<cat>/ subtree.
+    assets_root = PUBLIC_JSON.parent / "more"
+    if VAULT_MORE.exists():
+        copied = 0
+        for src in VAULT_MORE.rglob("*"):
+            if not src.is_file() or src.suffix.lower() == ".md":
+                continue
+            rel = src.relative_to(VAULT_MORE)
+            dst = assets_root / rel
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            if not dst.exists() or src.stat().st_mtime > dst.stat().st_mtime:
+                shutil.copy2(src, dst)
+                copied += 1
+        if copied:
+            print(f"[parse_more] mirrored {copied} asset file(s) → public/data/more/")
     return 0
 
 
