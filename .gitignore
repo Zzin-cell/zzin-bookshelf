@@ -11,6 +11,7 @@ data/watcher.log
 data/_todo_summaries.json
 data/books.json
 public/data/books.json
+public/data/more.json
 
 # Editor / OS
 .vscode/
@@ -21,3 +22,21 @@ Thumbs.db
 
 # Local server cache (if user ever runs one)
 *.pyc
+
+# Local-dev / browser-tool noise (in-app browser dumps these next to the
+# workspace; never commit them)
+edge-udd*/
+edge*/
+*.log
+*.ldb
+*.ldb-journal
+page.pdf
+shot.png
+debug.png
+debug*.html
+dump.html
+dev-server.err
+dev-server.out
+data/serve.err
+data/serve.out
+public/debug-styles.html
