@@ -388,8 +388,8 @@ function renderMore() {
       : (writeApiAvailableHere()
           ? `<div class="env-banner env-banner-dev">⚙ 本地 dev 模式 — 新建 / 删除按钮可用,需输本地密码 <code>zzin0715</code></div>`
           : apiBase
-            ? `<div class="env-banner env-banner-tunnel">🔗 远程 tunnel 模式 — 写操作走 <code>${escapeHtml(apiBase)}</code>(每次重启 tunnel 需在 ⚙ 设置里更新)</div>`
-            : `<div class="env-banner env-banner-pub">🔒 公网只读 — 写操作未配置 API 地址。点右上角「⚙ 设置」填入 cloudflared / ngrok tunnel URL(也可在本地 <code>http://127.0.0.1:8765</code> 跑 <code>scripts/serve.py</code> 直接用)</div>`)
+            ? `<div class="env-banner env-banner-tunnel">🔗 远程 tunnel 已配置 — 写操作走 <code>${escapeHtml(apiBase)}</code>。点「新建 / 删除」按钮会弹密码框,密码对就改 obsidian vault(每次重启 tunnel 需重新粘 URL 到 ⚙ 设置)</div>`
+            : `<div class="env-banner env-banner-pub">🔒 写操作未配置 — 点右上角「⚙ 设置」填入 cloudflared tunnel URL,以后按钮就能直接在公网页面弹密码框,密码对就改文件,无需本地接收</div>`)
         + `<div class="more-groups">
           ${cats.map(cat => `
             <section class="more-group">
@@ -611,14 +611,45 @@ function writeApiAvailableHere() {
 }
 
 function showReadOnlyNotice(action) {
-  alert(
-    `${action} 需要连接到本地 serve.py(localhost:8765)或远程 tunnel。\n\n` +
-    `当前页面是公网 mcode.cn 部署,无法直接写文件。\n\n` +
-    `请:\n` +
-    `  1) 本地跑 python scripts\\serve.py\n` +
-    `  2) 用 cloudflared tunnel --url http://localhost:8765 暴露到公网\n` +
-    `  3) 在「更多」页右上角点 ⚙ 设置,把 tunnel URL 填进去`
-  );
+  // Use a confirm modal instead of plain alert() so we can offer a
+  // one-click "Go to settings" action — the user just hit a write
+  // button, the right next step is to open ⚙ Settings, not to read
+  // prose. Avoids the "still need to do this locally" perception
+  // because the modal's only call to action is to set up the remote
+  // tunnel URL (which is invisible to the user once configured).
+  const m = document.createElement("div");
+  m.className = "modal-backdrop";
+  m.id = "more-readonly-modal";
+  m.innerHTML = `
+    <div class="modal-card" role="dialog" aria-labelledby="more-readonly-title">
+      <header class="modal-head">
+        <h2 id="more-readonly-title">⚙ ${escapeHtml(action)} — 先配 API 地址</h2>
+        <button class="modal-close" type="button" aria-label="关闭">×</button>
+      </header>
+      <div class="modal-body">
+        <p>公网 mcode.cn 部署本身没后端,无法直接写文件。<strong>远程就能用</strong>,只要把本地的 <code>serve.py</code> 通过 tunnel 暴露到公网,然后把 URL 填进「⚙ 设置」即可。</p>
+        <p class="modal-hint">
+          一次性配置好以后,「新建 / 删除 / 删除分类」按钮都会<strong>在公网页面里直接弹密码框</strong>,密码对就改,不对就拒绝。无需你本地做任何接收操作 —— tunnel 在后台自动转发。
+        </p>
+        <p class="modal-hint">
+          推荐工具:<a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/" target="_blank" rel="noopener">cloudflared</a>(免费、无需账号)
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-action="cancel">稍后</button>
+          <button type="button" class="btn btn-primary" data-action="settings">去 ⚙ 设置</button>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(m);
+  const close = () => m.remove();
+  m.addEventListener("click", (e) => { if (e.target === m) close(); });
+  m.querySelector(".modal-close").addEventListener("click", close);
+  m.querySelector('[data-action="cancel"]').addEventListener("click", close);
+  m.querySelector('[data-action="settings"]').addEventListener("click", () => {
+    close();
+    openSettingsModal();
+  });
 }
 
 function showUndoToast(message, onUndo) {
