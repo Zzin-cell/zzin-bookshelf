@@ -197,7 +197,31 @@ button:disabled,
   opacity: 1;
 }
 .more-item-x:hover { background: rgba(179, 58, 58, 0.12); color: #b33a3a; transform: scale(1.1); }
-.more-item-x:disabled { opacity: 0.5; cursor: default; }
+
+/* Delete-entire-category button. Smaller / less alarming than the
+   article × so people don't mis-click it. */
+.more-cat-x {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease, border-color 140ms ease;
+  opacity: 0.55;
+}
+.more-cat-x:hover {
+  background: rgba(179, 58, 58, 0.10);
+  color: #b33a3a;
+  border-color: rgba(179, 58, 58, 0.45);
+  opacity: 1;
+}
+.more-cat-x:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
 
 .undo-toast {
   position: fixed;
@@ -286,6 +310,11 @@ button:disabled,
   background: rgba(0, 0, 0, 0.04);
   border-color: var(--line);
   color: var(--ink-soft);
+}
+.env-banner-tunnel {
+  background: rgba(76, 110, 245, 0.08);
+  border-color: rgba(76, 110, 245, 0.35);
+  color: #2d4ba6;
 }
 
 /* ====== Modal (新建文章) ====== */

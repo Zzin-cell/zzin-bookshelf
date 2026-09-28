@@ -8,9 +8,15 @@ via the public web UI. Edits write to the obsidian vault (single source
 of truth), then re-parse more.json, then return fresh data.
 
 Endpoints:
-  GET  /                       static files (public/)
-  POST /api/more/articles      create or overwrite a note
-       JSON body: { category, title, body, tags?, slug? }
+  GET  /                            static files (public/)
+  POST /api/more/articles           create or overwrite a note
+       JSON body: { category, title, body, tags?, password }
+  POST /api/more/articles/delete    delete one note (password required)
+       JSON body: { category, slug, password }
+  POST /api/more/categories         create a category directory
+       JSON body: { name }
+  POST /api/more/categories/delete  delete an entire category (password required)
+       JSON body: { name, password }
 
 The server is **dev only** — never expose to the public deploy. The
 public site at mcode.cn is static (read-only) and gets updates via
@@ -20,6 +26,7 @@ git + deploy.
 import json
 import os
 import re
+import shutil
 import sys
 import http.server
 import socketserver
@@ -115,6 +122,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         if self.path.startswith("/api/more/articles"):
             self.handle_create_article()
             return
+        if self.path.startswith("/api/more/categories/delete"):
+            self.handle_delete_category()
+            return
         if self.path.startswith("/api/more/categories"):
             self.handle_create_category()
             return
@@ -180,6 +190,36 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         except Exception as e:
             self._json(500, {"ok": False, "error": str(e)})
 
+    def handle_delete_category(self) -> None:
+        try:
+            data = self._read_json_body()
+            self._check_password(data)
+            name = (data.get("name") or "").strip()
+            if not name:
+                self._json(400, {"ok": False, "error": "name is required"})
+                return
+            cat_dir = VAULT_MORE / name
+            if not cat_dir.exists() or not cat_dir.is_dir():
+                self._json(404, {"ok": False, "error": f"分类不存在: {cat_dir}"})
+                return
+            # Safety net: refuse to delete anything outside VAULT_MORE — even
+            # if a future bug or attacker crafts a path like ".." this still
+            # catches it.
+            try:
+                cat_dir.resolve().relative_to(VAULT_MORE.resolve())
+            except ValueError:
+                self._json(403, {"ok": False, "error": "refusing to delete outside vault more/"})
+                return
+            shutil.rmtree(cat_dir)
+            rebuild = rebuild_more()
+            self._json(200, {
+                "ok": True,
+                "deleted": str(cat_dir),
+                "data": rebuild["categories"],
+            })
+        except Exception as e:
+            self._json(500, {"ok": False, "error": str(e)})
+
     def handle_delete_article(self) -> None:
         try:
             data = self._read_json_body()
@@ -210,7 +250,9 @@ def main() -> int:
         print(f"[serve] public dir: {PUBLIC_DIR}")
         print(f"[serve] vault more: {VAULT_MORE}")
         print(f"[serve] POST /api/more/articles  (body: { '{ category, title, body, tags? }' })")
-        print(f"[serve] POST /api/more/categories (body: { '{ name }' })")
+        print(f"[serve] POST /api/more/articles/delete  (body: { '{ category, slug, password }' })")
+        print(f"[serve] POST /api/more/categories  (body: { '{ name }' })")
+        print(f"[serve] POST /api/more/categories/delete  (body: { '{ name, password }' })")
         print(f"[serve] listening on http://127.0.0.1:{PORT}  (Ctrl+C to stop)")
         try:
             httpd.serve_forever()

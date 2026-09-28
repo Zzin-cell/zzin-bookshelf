@@ -369,20 +369,27 @@ function renderMore() {
   setActiveNav("more");
   const cats = state.more || [];
   const total = cats.reduce((s, c) => s + (c.articles || []).length, 0);
+  const apiBase = getApiBase();
+  const localOrTunnel = writeApiAvailableHere() || !!apiBase;
   app.innerHTML = `
     <div style="margin-bottom:24px; display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap">
       <div class="section-head" style="margin-bottom:0">
         <h2>更多</h2>
         <p class="lead">微信读书以外的内容:技术课程笔记、动手学习小感悟等。所有 .md 放在 Obsidian vault 的 <code>more/&lt;分类&gt;/</code> 目录里自动同步。</p>
       </div>
-      <button class="btn btn-primary" id="new-article-btn"${isLocalDev() ? "" : " disabled title=\"公网只读,在本地 dev 才能新建\""}>✚ 新建文章</button>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button class="btn btn-ghost" id="more-settings-btn" type="button" title="配置写操作 API 地址">⚙ 设置</button>
+        <button class="btn btn-primary" id="new-article-btn" type="button">✚ 新建文章</button>
+      </div>
     </div>
 
     ${cats.length === 0
       ? `<div class="empty-state">还没有内容。点击右上角「✚ 新建文章」写第一篇,或者打开 Obsidian 在 vault 根目录建 <code>more/</code> 子目录放 .md 进去。</div>`
-      : isLocalDev()
-        ? `<div class="env-banner env-banner-dev">⚙ 本地 dev 模式 — 新建 / 删除按钮可用,需输本地密码 <code>zzin0715</code></div>`
-        : `<div class="env-banner env-banner-pub">🔒 公网只读 — 新建 / 删除按钮已禁用。要写操作请在本地 <code>http://127.0.0.1:8765</code> 跑 <code>scripts/serve.py</code></div>`
+      : (writeApiAvailableHere()
+          ? `<div class="env-banner env-banner-dev">⚙ 本地 dev 模式 — 新建 / 删除按钮可用,需输本地密码 <code>zzin0715</code></div>`
+          : apiBase
+            ? `<div class="env-banner env-banner-tunnel">🔗 远程 tunnel 模式 — 写操作走 <code>${escapeHtml(apiBase)}</code>(每次重启 tunnel 需在 ⚙ 设置里更新)</div>`
+            : `<div class="env-banner env-banner-pub">🔒 公网只读 — 写操作未配置 API 地址。点右上角「⚙ 设置」填入 cloudflared / ngrok tunnel URL(也可在本地 <code>http://127.0.0.1:8765</code> 跑 <code>scripts/serve.py</code> 直接用)</div>`)
         + `<div class="more-groups">
           ${cats.map(cat => `
             <section class="more-group">
@@ -390,6 +397,10 @@ function renderMore() {
                 <span class="more-emoji">${escapeHtml(cat.categoryEmoji || "📄")}</span>
                 <h3>${escapeHtml(cat.category)}</h3>
                 <span class="more-count">${(cat.articles || []).length} 篇</span>
+                <button class="more-cat-x" type="button"
+                        data-cat="${escapeHtml(cat.category)}"
+                        title="删除整个分类「${escapeHtml(cat.category)}」(含全部 ${(cat.articles || []).length} 篇文章)"
+                        aria-label="删除分类 ${escapeHtml(cat.category)}">× 删除分类</button>
               </header>
               <ul class="more-list">
                 ${(cat.articles || []).map(a => `
@@ -402,7 +413,7 @@ function renderMore() {
                         ${a.tags && a.tags.length ? `<span class="more-tags">${a.tags.map(t => `<span class="more-tag">#${escapeHtml(t)}</span>`).join(" ")}</span>` : ""}
                       </span>
                     </a>
-                    <button class="more-item-x" type="button" data-cat="${escapeHtml(cat.category)}" data-slug="${escapeHtml(a.slug)}" aria-label="删除 ${escapeHtml(a.title)}"${isLocalDev() ? "" : " disabled title=\"公网只读,在本地 dev 才能删除\""}>×</button>
+                    <button class="more-item-x" type="button" data-cat="${escapeHtml(cat.category)}" data-slug="${escapeHtml(a.slug)}" aria-label="删除 ${escapeHtml(a.title)}">×</button>
                   </li>
                 `).join("")}
               </ul>
@@ -412,9 +423,11 @@ function renderMore() {
         </div>`}
   `;
 
+  document.getElementById("more-settings-btn")?.addEventListener("click", openSettingsModal);
+
   const newBtn = document.getElementById("new-article-btn");
   if (newBtn) newBtn.addEventListener("click", () => {
-    if (!isLocalDev()) {
+    if (!localOrTunnel) {
       showReadOnlyNotice("新建文章");
       return;
     }
@@ -435,7 +448,7 @@ function renderMore() {
       const li = btn.closest(".more-list-item");
       const titleEl = li && li.querySelector(".more-link-title");
       const title = titleEl ? titleEl.textContent : slug;
-      if (!isLocalDev()) {
+      if (!localOrTunnel) {
         showReadOnlyNotice("删除文章");
         return;
       }
@@ -448,7 +461,7 @@ function renderMore() {
       btn.disabled = true;
       btn.textContent = "…";
       try {
-        const r = await fetch("/api/more/articles/delete", {
+        const r = await fetch(apiURL("/api/more/articles/delete"), {
           method: "POST",
           headers: { "Content-Type": "application/json; charset=utf-8" },
           body: JSON.stringify({ category: cat, slug, password }),
@@ -479,7 +492,7 @@ function renderMore() {
             // re-asks the server to re-parse (no file is restored
             // automatically — that would need a backup). For now we
             // just reload the list to refetch current data.
-            state.more = (await (await fetch("/data/more.json")).json());
+            state.more = (await (await fetch(apiURL("/data/more.json"))).json());
             renderMore();
           });
         }
@@ -490,18 +503,122 @@ function renderMore() {
       }
     });
   });
+
+  // Delete an entire category (all articles under it) after password
+  // verification. Animates the section out and re-renders the list.
+  document.querySelectorAll(".more-cat-x").forEach(btn => {
+    btn.addEventListener("click", async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const cat = btn.dataset.cat;
+      if (!cat) return;
+      if (!localOrTunnel) {
+        showReadOnlyNotice("删除分类");
+        return;
+      }
+      const section = btn.closest(".more-group");
+      const articleCount = section
+        ? section.querySelectorAll(".more-list-item").length
+        : 0;
+      const password = await openPasswordPrompt({
+        title: `删除整个分类「${cat}」?`,
+        hint: `将从 Obsidian vault 永久删除分类 <code>${escapeHtml(cat)}/</code> 及其全部 ${articleCount} 篇文章,无法撤销。`,
+        submitText: "确认删除分类",
+      });
+      if (password === null) return; // cancelled
+      btn.disabled = true;
+      const origText = btn.textContent;
+      btn.textContent = "删除中…";
+      try {
+        const r = await fetch(apiURL("/api/more/categories/delete"), {
+          method: "POST",
+          headers: { "Content-Type": "application/json; charset=utf-8" },
+          body: JSON.stringify({ name: cat, password }),
+        });
+        const json = await r.json().catch(() => ({}));
+        if (!r.ok || !json.ok) {
+          btn.disabled = false;
+          btn.textContent = origText;
+          alert("删除分类失败:" + (json.error || r.statusText));
+          return;
+        }
+        // Update in-memory state + animate the section out.
+        state.more = json.data || state.more;
+        if (section) {
+          section.style.transition = "opacity 180ms ease, transform 180ms ease";
+          section.style.opacity = "0";
+          section.style.transform = "translateY(-4px)";
+          setTimeout(() => {
+            section.remove();
+            renderMore();
+          }, 220);
+        } else {
+          renderMore();
+        }
+      } catch (err) {
+        btn.disabled = false;
+        btn.textContent = origText;
+        alert("网络错误:" + (err && err.message || err));
+      }
+    });
+  });
 }
 
-// Public deploys at *.mcode.cn are static (GET-only) and can't accept
-// POST. Surface a friendly message there instead of letting the
-// browser show a generic "Not Allowed" from the static file server.
+// `isLocalDev()` checks whether the page itself is served by
+// `python scripts/serve.py` (so the POST /api/more/* handlers exist
+// in the same origin). On the public mcode.cn deploy it returns false
+// — there is no server-side handler at all.
 function isLocalDev() {
   const h = location.hostname;
   return h === "localhost" || h === "127.0.0.1" || h === "";
 }
 
+// Write operations (POST /api/more/...) live behind `scripts/serve.py`.
+// When the user is on the public site, that handler doesn't exist on
+// the mcode.cn origin. They need to expose their local serve.py via
+// ngrok / cloudflared and tell the front-end what URL to talk to. We
+// persist that URL in localStorage so the user only configures it once
+// per tunnel restart.
+const API_BASE_KEY = "more_api_base";
+
+function getApiBase() {
+  try {
+    const v = (localStorage.getItem(API_BASE_KEY) || "").trim();
+    return v.replace(/\/+$/, ""); // strip trailing /
+  } catch (_) {
+    return "";
+  }
+}
+
+function setApiBase(url) {
+  try {
+    if (url) localStorage.setItem(API_BASE_KEY, url.replace(/\/+$/, ""));
+    else localStorage.removeItem(API_BASE_KEY);
+  } catch (_) { /* ignore quota errors */ }
+}
+
+function apiURL(path) {
+  // path should start with "/" — we only append, never collapse.
+  const base = getApiBase();
+  return base ? base + path : path;
+}
+
+// Detect whether the current origin can serve the write API at all
+// (i.e. we're on localhost / 127.0.0.1 with serve.py running). The
+// public mcode.cn origin can never serve POST.
+function writeApiAvailableHere() {
+  return isLocalDev();
+}
+
 function showReadOnlyNotice(action) {
-  alert(`${action} 只在本地 dev 模式可用(需用 python scripts/serve.py 启动)。\n\n当前是公网,操作不能持久化。`);
+  alert(
+    `${action} 需要连接到本地 serve.py(localhost:8765)或远程 tunnel。\n\n` +
+    `当前页面是公网 mcode.cn 部署,无法直接写文件。\n\n` +
+    `请:\n` +
+    `  1) 本地跑 python scripts\\serve.py\n` +
+    `  2) 用 cloudflared tunnel --url http://localhost:8765 暴露到公网\n` +
+    `  3) 在「更多」页右上角点 ⚙ 设置,把 tunnel URL 填进去`
+  );
 }
 
 function showUndoToast(message, onUndo) {
@@ -523,6 +640,84 @@ function showUndoToast(message, onUndo) {
     close();
     try { onUndo && onUndo(); } catch (_) { /* swallow */ }
   });
+}
+
+// Configure the API base URL (used for write operations from the
+// public mcode.cn page). User runs `python scripts/serve.py` locally,
+// exposes it via cloudflared/ngrok, and pastes the public URL here.
+// Stored in localStorage so it survives page reloads.
+function openSettingsModal() {
+  const existing = getApiBase();
+  const m = document.createElement("div");
+  m.className = "modal-backdrop";
+  m.id = "more-settings-modal";
+  m.innerHTML = `
+    <div class="modal-card" role="dialog" aria-labelledby="more-settings-title">
+      <header class="modal-head">
+        <h2 id="more-settings-title">⚙ 写操作 API 地址</h2>
+        <button class="modal-close" type="button" aria-label="关闭">×</button>
+      </header>
+      <form id="more-settings-form" class="modal-body" novalidate>
+        <label class="field">
+          <span>tunnel / 本地 API 地址</span>
+          <input name="base" type="url" autocomplete="off"
+                 placeholder="https://xxxx.trycloudflare.com"
+                 value="${escapeHtml(existing)}" />
+        </label>
+        <p class="modal-hint">
+          公网 mcode.cn 部署本身不带后端,无法写文件。要在公网页面上
+          删/建文章或分类,需要把你本地 <code>python scripts/serve.py</code>
+          起的 <code>http://localhost:8765</code> 通过 tunnel 暴露到公网。
+        </p>
+        <p class="modal-hint">
+          最简单:下载 <a href="https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/downloads/" target="_blank" rel="noopener">cloudflared</a>,
+          跑 <code>cloudflared tunnel --url http://localhost:8765</code>,
+          把输出的 <code>https://*.trycloudflare.com</code> URL 粘到上面。
+        </p>
+        <p class="modal-hint">
+          当前页面本身在 localhost/127.0.0.1 时留空即可,会直接调用当前 origin 的 <code>/api/more/*</code>。
+        </p>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" data-action="clear">清空</button>
+          <button type="button" class="btn btn-ghost" data-action="cancel">取消</button>
+          <button type="submit" class="btn btn-primary" data-action="save">保存</button>
+        </div>
+        <div class="modal-status" id="more-settings-status"></div>
+      </form>
+    </div>
+  `;
+  document.body.appendChild(m);
+  const form = m.querySelector("#more-settings-form");
+  const status = m.querySelector("#more-settings-status");
+  const input = form.querySelector('input[name="base"]');
+  const close = () => m.remove();
+
+  m.addEventListener("click", (e) => { if (e.target === m) close(); });
+  m.querySelector(".modal-close").addEventListener("click", close);
+  m.querySelector('[data-action="cancel"]').addEventListener("click", close);
+  m.querySelector('[data-action="clear"]').addEventListener("click", () => {
+    input.value = "";
+  });
+  form.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const v = (input.value || "").trim();
+    if (v && !/^https?:\/\//i.test(v)) {
+      status.textContent = "❌ 必须是 http(s):// 开头的 URL";
+      status.className = "modal-status error";
+      return;
+    }
+    setApiBase(v);
+    status.textContent = "✅ 已保存,正在刷新…";
+    status.className = "modal-status ok";
+    setTimeout(() => {
+      close();
+      // re-render the current view so the env-banner reflects the new state
+      const hash = location.hash || "#/more";
+      location.hash = "";
+      location.hash = hash;
+    }, 400);
+  });
+  setTimeout(() => input.focus(), 0);
 }
 
 function openNewArticleModal() {
@@ -614,7 +809,7 @@ function openNewArticleModal() {
     status.textContent = "提交中…";
     status.className = "modal-status pending";
     try {
-      const r = await fetch("/api/more/articles", {
+      const r = await fetch(apiURL("/api/more/articles"), {
         method: "POST",
         headers: { "Content-Type": "application/json; charset=utf-8" },
         body: JSON.stringify({
@@ -691,6 +886,7 @@ function validateField(name, value) {
 function renderMoreArticle(categoryKey, articleSlug) {
   setActiveNav("more");
   const cat = (state.more || []).find(c => c.categoryKey === categoryKey);
+  const localOrTunnel = writeApiAvailableHere() || !!getApiBase();
   if (!cat) {
     app.innerHTML = `<div class="empty-state">分类「${escapeHtml(categoryKey)}」不存在。<a href="#/more">回到更多</a></div>`;
     return;
@@ -703,7 +899,7 @@ function renderMoreArticle(categoryKey, articleSlug) {
   app.innerHTML = `
     <div class="more-article-toolbar">
       <a class="btn btn-ghost" href="#/more">← ${escapeHtml(cat.categoryEmoji || "")} ${escapeHtml(cat.category)}</a>
-      <button class="btn btn-ghost btn-danger" id="more-delete-btn"${isLocalDev() ? ' title="从 Obsidian vault 永久删除这篇文章"' : ' disabled title="公网只读,在本地 dev 才能删除"'}>🗑 删除</button>
+      <button class="btn btn-ghost btn-danger" id="more-delete-btn" title="从 Obsidian vault 永久删除这篇文章">🗑 删除</button>
     </div>
     <article class="more-article">
       <header class="more-article-head">
@@ -721,7 +917,7 @@ function renderMoreArticle(categoryKey, articleSlug) {
   const delBtn = document.getElementById("more-delete-btn");
   if (delBtn) {
     delBtn.addEventListener("click", () => {
-      if (!isLocalDev()) {
+      if (!localOrTunnel) {
         showReadOnlyNotice("删除文章");
         return;
       }
@@ -737,7 +933,7 @@ function renderMoreArticle(categoryKey, articleSlug) {
           });
           if (password === null) return; // cancelled
           try {
-            const r = await fetch("/api/more/articles/delete", {
+            const r = await fetch(apiURL("/api/more/articles/delete"), {
               method: "POST",
               headers: { "Content-Type": "application/json; charset=utf-8" },
               body: JSON.stringify({ category: cat.category, slug: a.slug, password }),
