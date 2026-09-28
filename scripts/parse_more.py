@@ -64,6 +64,38 @@ def md_to_html(body: str) -> str:
     return md.convert(body)
 
 
+_IMG_SRC_RE = re.compile(r'(<img\b[^>]*?\bsrc=")([^"]+)("[^>]*>)', re.IGNORECASE)
+
+
+def rewrite_image_srcs(html: str, category_key: str) -> str:
+    """Rewrite relative <img src="..."> to absolute `/data/more/<category>/...`.
+
+    python-markdown preserves Obsidian's relative path (e.g. `sample.png`)
+    as-is. When the SPA renders the article at `/#/more/<cat>/<slug>` the
+    browser resolves that relative URL against the document base, which
+    produces `/sample.png` (404) instead of
+    `/data/more/<cat>/sample.png`. Mirroring alone isn't enough — we have
+    to rewrite the rendered HTML too.
+
+    Leaves alone:
+      - absolute URLs (http://, https://)
+      - protocol-relative (`//cdn.example/...`)
+      - data URIs
+      - already-rooted paths starting with `/`
+    """
+    def repl(m: re.Match) -> str:
+        prefix, src, suffix = m.group(1), m.group(2), m.group(3)
+        if re.match(r'^(https?:|//|data:)', src, re.IGNORECASE):
+            return m.group(0)
+        if src.startswith('/'):
+            return m.group(0)
+        # strip leading `./` so `./assets/x.png` → `assets/x.png`
+        if src.startswith('./'):
+            src = src[2:]
+        return f'{prefix}/data/more/{category_key}/{src}{suffix}'
+    return _IMG_SRC_RE.sub(repl, html)
+
+
 def extract_description(body: str, max_len: int = 120) -> str:
     """Pick the first non-heading paragraph as a short summary."""
     for line in body.splitlines():
@@ -131,6 +163,7 @@ def main() -> int:
             updated = fm.get("updated") or fm.get("date") or fm.get("updatedAt") or ""
             tags = [t.strip() for t in re.split(r"[,，]\s*", (fm.get("tags") or fm.get("tag") or "").strip()) if t.strip()]
             html_body = md_to_html(body)
+            html_body = rewrite_image_srcs(html_body, category_key)
             stat = md_file.stat()
             articles.append({
                 "slug": slugify(md_file.stem),
