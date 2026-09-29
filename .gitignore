@@ -5,6 +5,9 @@ __pycache__/
 .venv/
 venv/
 
+# Node
+node_modules/
+
 # Local runtime / state
 .deploy_pending
 data/watcher.log
@@ -12,6 +15,10 @@ data/_todo_summaries.json
 data/books.json
 public/data/books.json
 public/data/more.json
+data/*.bak
+data/*.out
+public/data/*.bak
+public/data/*.out
 
 # Editor / OS
 .vscode/
