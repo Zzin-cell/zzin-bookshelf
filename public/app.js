@@ -371,6 +371,20 @@ function renderMore() {
   const total = cats.reduce((s, c) => s + (c.articles || []).length, 0);
   const apiBase = getApiBase();
   const localOrTunnel = writeApiAvailableHere() || !!apiBase;
+  // Migration banner: only on the old space.mcode.cn deploy. The CF Pages
+  // site (zzin-bookshelf.pages.dev) won't render this — its hostname
+  // doesn't match — so users who land on the new site never see the
+  // "you should switch" nag.
+  const showMigrationBanner = location.hostname.endsWith('.space.mcode.cn');
+  const migrationBanner = showMigrationBanner
+    ? `<div class="env-banner env-banner-migration">
+      <strong>📦 此站点已迁移。</strong>
+      新版「更多」模块部署在
+      <a href="https://zzin-bookshelf.pages.dev/#/more" target="_blank" rel="noopener">zzin-bookshelf.pages.dev</a>
+      (Cloudflare Pages + Worker 后端),支持直接在公网页面弹密码框新建/删除文章和分类。
+      本站点(space.mcode.cn)只读维护,不再接受写入操作。
+    </div>`
+    : '';
   app.innerHTML = `
     <div style="margin-bottom:24px; display:flex; align-items:flex-end; justify-content:space-between; gap:16px; flex-wrap:wrap">
       <div class="section-head" style="margin-bottom:0">
@@ -382,6 +396,8 @@ function renderMore() {
         <button class="btn btn-primary" id="new-article-btn" type="button">✚ 新建文章</button>
       </div>
     </div>
+
+    ${migrationBanner}
 
     ${cats.length === 0
       ? `<div class="empty-state">还没有内容。点击右上角「✚ 新建文章」写第一篇,或者打开 Obsidian 在 vault 根目录建 <code>more/</code> 子目录放 .md 进去。</div>`

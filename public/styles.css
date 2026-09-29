@@ -316,6 +316,20 @@ button:disabled,
   border-color: rgba(76, 110, 245, 0.35);
   color: #2d4ba6;
 }
+.env-banner-migration {
+  background: rgba(196, 130, 89, 0.10);
+  border-color: rgba(196, 130, 89, 0.45);
+  color: #6b3f1a;
+}
+.env-banner-migration a {
+  color: #2d4ba6;
+  text-decoration: underline;
+  font-weight: 600;
+}
+.env-banner-migration a:hover {
+  color: #1d3b86;
+}
+}
 
 /* ====== Modal (新建文章) ====== */
 .modal-backdrop {
