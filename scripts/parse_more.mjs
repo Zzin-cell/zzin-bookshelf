@@ -22,10 +22,17 @@ import { marked } from 'marked';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const VAULT_MORE = path.resolve(
-  process.env.OBSIDIAN_VAULT || 'C:/Users/MR/Documents/Obsidian Vault',
-  'more'
-);
+// Source of "more/" content. Resolution order:
+//   1. MORE_SOURCE_PATH env var (CI / wrangler can override)
+//   2. <repo>/vault/more when running on Cloudflare Pages (CF_PAGES=1) —
+//      the Obsidian Git plugin mirrors the vault here
+//   3. OBSIDIAN_VAULT env var (Windows local dev convenience)
+//   4. Default Windows path for local dev
+const VAULT_MORE = process.env.MORE_SOURCE_PATH
+  ? path.resolve(process.env.MORE_SOURCE_PATH)
+  : process.env.CF_PAGES
+    ? path.join(ROOT, 'vault', 'more')
+    : path.resolve(process.env.OBSIDIAN_VAULT || 'C:/Users/MR/Documents/Obsidian Vault', 'more');
 const DATA_JSON = path.join(ROOT, 'data', 'more.json');
 const PUBLIC_JSON = path.join(ROOT, 'public', 'data', 'more.json');
 

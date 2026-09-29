@@ -1,0 +1,22 @@
+# wrangler.toml — Cloudflare Pages config for zzin-bookshelf.
+#
+# Production build settings (build command, output dir, branch) are
+# configured in the Cloudflare Dashboard when you create the Pages project.
+# This file is for `wrangler pages dev` (local emulation) and `wrangler
+# pages deploy` (manual deploy).
+#
+# Secrets — set via `wrangler pages secret put NAME --project-name zzin-bookshelf`:
+#   SITE_PASSWORD    local-only master password for write endpoints
+#                    (default in code: "zzin0715" — override in production)
+#   GITHUB_TOKEN     GitHub PAT with `repo` scope. Used by the Worker to
+#                    commit / delete files under vault/more/.
+# Optional:
+#   GITHUB_REPO      default "Zzin-cell/zzin-bookshelf"
+#   GITHUB_BRANCH    default "main"
+#   VAULT_PATH       default "vault/more" (path inside the repo where
+#                    Obsidian vault's `more/` is mirrored by Obsidian Git)
+
+name = "zzin-bookshelf"
+pages_build_output_dir = "public"
+compatibility_date = "2024-09-01"
+compatibility_flags = ["nodejs_compat"]

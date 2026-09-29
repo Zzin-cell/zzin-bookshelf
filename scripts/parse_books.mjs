@@ -21,9 +21,20 @@ import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
-const VAULT_DIR = process.env.OBSIDIAN_VAULT
-  ? path.resolve(process.env.OBSIDIAN_VAULT)
-  : path.resolve('C:/Users/MR/Documents/Obsidian Vault');
+// Source of weread-book notes (.md files at vault root).
+// Resolution order:
+//   1. BOOKS_SOURCE_PATH env var (CI / wrangler override)
+//   2. <repo>/vault when running on Cloudflare Pages (CF_PAGES=1) —
+//      Obsidian Git mirrors the vault root here
+//   3. OBSIDIAN_VAULT env var (Windows local dev convenience)
+//   4. Default Windows path for local dev
+const VAULT_DIR = process.env.BOOKS_SOURCE_PATH
+  ? path.resolve(process.env.BOOKS_SOURCE_PATH)
+  : process.env.CF_PAGES
+    ? path.join(ROOT, 'vault')
+    : process.env.OBSIDIAN_VAULT
+      ? path.resolve(process.env.OBSIDIAN_VAULT)
+      : path.resolve('C:/Users/MR/Documents/Obsidian Vault');
 const OUTPUT = path.join(ROOT, 'data', 'books.json');
 const PUBLIC_OUTPUT = path.join(ROOT, 'public', 'data', 'books.json');
 
@@ -201,10 +212,26 @@ async function parseOne(mdPath) {
 }
 
 async function main() {
-  const entries = await fs.readdir(VAULT_DIR, { withFileTypes: true });
+  // If the configured vault path doesn't exist, fall back gracefully so
+  // CF Pages doesn't crash before the user has wired up Obsidian Git.
+  let dir = VAULT_DIR;
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch (e) {
+    if (e.code === 'ENOENT') {
+      console.warn(`[parse_books] vault not found at ${dir} — writing empty placeholder`);
+      await fs.mkdir(path.dirname(OUTPUT), { recursive: true });
+      await fs.writeFile(OUTPUT, '[]', 'utf8');
+      await fs.mkdir(path.dirname(PUBLIC_OUTPUT), { recursive: true });
+      await fs.writeFile(PUBLIC_OUTPUT, '[]', 'utf8');
+      return 0;
+    }
+    throw e;
+  }
   const mdFiles = entries
     .filter((e) => e.isFile() && e.name.toLowerCase().endsWith('.md'))
-    .map((e) => path.join(VAULT_DIR, e.name))
+    .map((e) => path.join(dir, e.name))
     .sort();
   const books = [];
   for (const p of mdFiles) {
