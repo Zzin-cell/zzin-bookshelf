@@ -2131,3 +2131,120 @@ button:disabled,
     min-height: 300px;
   }
 }
+
+/* ===== whiteboard elements ===== */
+.whiteboard-actions {
+  display: flex;
+  gap: 4px;
+}
+.whiteboard-actions .btn {
+  padding: 3px 10px;
+  font-size: 12px;
+}
+.whiteboard-stage {
+  position: relative;
+  overflow: auto;
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(circle, rgba(0,0,0,0.06) 1px, transparent 1px);
+  background-size: 22px 22px;
+  background-position: 0 0;
+  flex: 1;
+  min-height: 600px;
+  cursor: default;
+}
+
+.wb-element {
+  background: var(--paper-deep);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: grab;
+  user-select: none;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  transition: box-shadow 100ms ease;
+  background-color: rgba(255,255,255,0.96);
+}
+.wb-element:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.10);
+  z-index: 5;
+}
+.wb-element.is-selected {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.wb-element.is-connecting {
+  outline: 2px dashed #5b7fbf;
+  outline-offset: 2px;
+  cursor: crosshair;
+}
+.wb-element.is-mine, .wb-element.is-hot {
+  /* unused */
+}
+
+.wb-text .wb-text-content {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--ink);
+  outline: none;
+}
+.wb-text .wb-text-content:empty::before {
+  content: "新建想法…";
+  color: var(--muted);
+}
+
+.wb-note {
+  background-color: #fffaee;
+  border-left: 3px solid var(--gold);
+}
+.wb-note .wb-note-source {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+  cursor: text;
+}
+.wb-note .wb-note-content {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  outline: none;
+  white-space: pre-wrap;
+}
+
+.wb-table {
+  background: #fff;
+  padding: 0;
+  overflow: auto;
+}
+.wb-table .wb-table-grid {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.wb-table .wb-table-grid td {
+  border: 1px solid var(--line);
+  padding: 6px 10px;
+  min-width: 80px;
+  outline: none;
+}
+.wb-table .wb-table-grid td:focus {
+  background: #fffbe6;
+}
+
+.wb-resize {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: var(--accent);
+  border: 2px solid var(--paper);
+  border-radius: 50%;
+  z-index: 10;
+}
+.wb-resize-nw { top: -5px; left: -5px; cursor: nw-resize; }
+.wb-resize-n  { top: -5px; left: 50%; margin-left: -5px; cursor: n-resize; }
+.wb-resize-ne { top: -5px; right: -5px; cursor: ne-resize; }
+.wb-resize-e  { top: 50%; right: -5px; margin-top: -5px; cursor: e-resize; }
+.wb-resize-se { bottom: -5px; right: -5px; cursor: se-resize; }
+.wb-resize-s  { bottom: -5px; left: 50%; margin-left: -5px; cursor: s-resize; }
+.wb-resize-sw { bottom: -5px; left: -5px; cursor: sw-resize; }
+.wb-resize-w  { top: 50%; left: -5px; margin-top: -5px; cursor: w-resize; }

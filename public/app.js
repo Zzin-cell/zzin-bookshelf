@@ -304,13 +304,16 @@ function renderBook(slug) {
       <section class="book-whiteboard" id="book-whiteboard">
         <div class="whiteboard-toolbar">
           <span>📋 思路白板</span>
-          <span class="whiteboard-hint">第一阶段仅展示骨架 · tldraw 集成在下个 commit 启用</span>
+          <span class="whiteboard-hint">从左侧拖笔记卡片 → 在此组织 · 双击节点可删除/连线</span>
+          <div class="whiteboard-actions">
+            <button class="btn btn-ghost" type="button" id="wb-add-text" title="新建文字节点">＋ 文字</button>
+            <button class="btn btn-ghost" type="button" id="wb-add-table" title="新建 3×3 表格">＋ 表格</button>
+            <button class="btn btn-ghost" type="button" id="wb-export" title="导出当前白板为 JSON">导出</button>
+            <button class="btn btn-ghost" type="button" id="wb-import" title="导入 JSON 覆盖当前白板">导入</button>
+            <button class="btn btn-ghost" type="button" id="wb-clear" title="清空白板">清空</button>
+          </div>
         </div>
-        <div class="whiteboard-stage">
-          <p style="color: var(--muted); padding: 24px; font-size: 13px;">
-            (白板渲染区 · tldraw 集成后会在这里绘制文字/表格/连线)
-          </p>
-        </div>
+        <div class="whiteboard-stage" id="whiteboard-stage"></div>
       </section>
     </div>
   `;
@@ -320,6 +323,72 @@ function renderBook(slug) {
     document.querySelector(".book-workspace")?.classList.toggle("left-collapsed");
     const btn = document.getElementById("left-collapse");
     if (btn) btn.textContent = document.querySelector(".book-workspace")?.classList.contains("left-collapsed") ? "⟩ 展开" : "⟨ 收起";
+  });
+
+  // 初始化白板(whiteboard.js 必须在此之前加载)
+  const stage = document.getElementById("whiteboard-stage");
+  WB.init(stage, book.slug);
+
+  // 工具栏:新建文字 / 表格
+  document.getElementById("wb-add-text")?.addEventListener("click", () => {
+    const r = stage.getBoundingClientRect();
+    WB.createText(60, 60);
+  });
+  document.getElementById("wb-add-table")?.addEventListener("click", () => {
+    WB.createTable(80, 80, 3, 3);
+  });
+  document.getElementById("wb-clear")?.addEventListener("click", () => WB.clear());
+  document.getElementById("wb-export")?.addEventListener("click", () => {
+    const json = WB.exportJSON();
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${book.slug}-whiteboard.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+  document.getElementById("wb-import")?.addEventListener("click", () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "application/json";
+    input.addEventListener("change", () => {
+      const file = input.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const ok = WB.importJSON(String(reader.result || ""));
+        if (!ok) alert("JSON 解析失败,白板未改动");
+      };
+      reader.readAsText(file);
+    });
+    input.click();
+  });
+
+  // 笔记卡片 → 拖入白板 → 创建 note 节点
+  // HTML5 drag-and-drop
+  stage.addEventListener("dragover", (ev) => {
+    ev.preventDefault();
+    ev.dataTransfer.dropEffect = "copy";
+  });
+  stage.addEventListener("drop", (ev) => {
+    ev.preventDefault();
+    const text = ev.dataTransfer.getData("text/x-note-text");
+    const chapter = ev.dataTransfer.getData("text/x-note-chapter");
+    if (!text) return;
+    WB.dropNoteFromCard(text, chapter, ev.clientX, ev.clientY);
+  });
+
+  document.querySelectorAll(".note-card[draggable]").forEach((card) => {
+    card.addEventListener("dragstart", (ev) => {
+      const text = card.dataset.noteText || "";
+      const chapter = card.dataset.noteChapter || "";
+      ev.dataTransfer.setData("text/x-note-text", text);
+      ev.dataTransfer.setData("text/x-note-chapter", chapter);
+      ev.dataTransfer.effectAllowed = "copy";
+    });
   });
 }
 
