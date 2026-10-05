@@ -1930,14 +1930,12 @@ button:disabled,
 /* ===== book detail: left notes + right whiteboard ===== */
 
 .book-workspace {
-  display: grid;
-  grid-template-columns: minmax(320px, 38%) 1fr;
+  display: flex;
   gap: 18px;
   height: calc(100vh - 80px);
   min-height: 600px;
-}
-.book-workspace.left-collapsed {
-  grid-template-columns: 1fr;
+  align-items: stretch;
+  overflow: hidden;
 }
 .book-workspace.left-collapsed .book-left {
   display: none;
@@ -1951,6 +1949,11 @@ button:disabled,
   background: var(--paper-soft);
   overflow: hidden;
   min-height: 0;
+  flex: 0 0 360px;       /* fixed base width */
+  min-width: 280px;       /* never collapse below */
+  max-width: 460px;       /* never wider than 460 */
+  resize: horizontal;     /* user can drag if needed */
+  overflow: hidden;       /* internal scroll instead */
 }
 .book-left-toolbar {
   display: flex;
@@ -1959,6 +1962,7 @@ button:disabled,
   padding: 10px 14px;
   border-bottom: 1px solid var(--line);
   background: var(--paper);
+  flex-shrink: 0;
 }
 .book-left-toolbar .btn {
   padding: 4px 10px;
@@ -1969,8 +1973,8 @@ button:disabled,
 }
 
 .book-left-body {
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
   flex: 1;
   min-height: 0;
@@ -1982,6 +1986,8 @@ button:disabled,
   overflow: auto;
   max-height: 50%;
   flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 .book-intro .book-cover-large {
   width: 100%;
@@ -2045,6 +2051,14 @@ button:disabled,
   overflow: auto;
   min-height: 0;
   padding: 0 18px 18px;
+  width: 100%;
+  box-sizing: border-box;
+  flex: 1;
+}
+
+.book-whiteboard {
+  flex: 1;
+  min-width: 0;
 }
 .notes-board {
   display: grid;
@@ -2129,8 +2143,15 @@ button:disabled,
 /* Mobile fallback */
 @media (max-width: 800px) {
   .book-workspace {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     height: auto;
+    overflow: visible;
+  }
+  .book-left {
+    flex: 0 0 auto;
+    width: 100%;
+    max-width: none;
+    resize: none;
   }
   .book-whiteboard {
     min-height: 300px;
