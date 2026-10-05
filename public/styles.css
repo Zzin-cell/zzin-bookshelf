@@ -1927,3 +1927,207 @@ button:disabled,
   .section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
   .section-head .lead { text-align: left; }
 }
+/* ===== book detail: left notes + right whiteboard ===== */
+
+.book-workspace {
+  display: grid;
+  grid-template-columns: minmax(320px, 38%) 1fr;
+  gap: 18px;
+  height: calc(100vh - 80px);
+  min-height: 600px;
+}
+.book-workspace.left-collapsed {
+  grid-template-columns: 1fr;
+}
+.book-workspace.left-collapsed .book-left {
+  display: none;
+}
+
+.book-left {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--paper-soft);
+  overflow: hidden;
+}
+.book-left-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  background: var(--paper);
+}
+.book-left-toolbar .btn {
+  padding: 4px 10px;
+  font-size: 13px;
+}
+.book-left-toolbar #left-collapse {
+  margin-left: auto;
+}
+
+.book-left-body {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  overflow: hidden;
+  flex: 1;
+}
+
+.book-intro {
+  padding: 16px 18px;
+  border-bottom: 1px solid var(--line);
+  overflow: auto;
+}
+.book-intro .book-cover-large {
+  width: 100%;
+  max-width: 160px;
+  aspect-ratio: 3 / 4;
+  background: var(--paper-deep);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+.book-intro .book-cover-large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.book-intro .book-cover-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  background: var(--paper-deep);
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+.book-intro h1 {
+  font-size: 20px;
+  line-height: 1.3;
+  margin: 0 0 4px;
+}
+.book-intro .author {
+  color: var(--ink-soft);
+  font-size: 13px;
+  margin-bottom: 10px;
+}
+.book-intro .meta-list {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 12px;
+  margin: 8px 0;
+  font-size: 12.5px;
+}
+.book-intro .meta-list dt {
+  color: var(--muted);
+}
+.book-intro .meta-list dd {
+  margin: 0;
+  color: var(--ink);
+  word-break: break-word;
+}
+.book-intro .summary-text {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--ink-soft);
+  margin-top: 10px;
+  border-left: 2px solid var(--accent);
+  padding-left: 10px;
+}
+
+.book-notes {
+  overflow: auto;
+  padding: 0 18px 18px;
+}
+.notes-board {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+  align-content: start;
+}
+.note-card {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 10px 12px;
+  cursor: grab;
+  transition: box-shadow 120ms ease, transform 120ms ease;
+  user-select: none;
+}
+.note-card:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+.note-card.is-mine {
+  border-left-color: var(--gold);
+  background: #fffaee;
+}
+.note-card.is-hot {
+  border-left-color: #b33a3a;
+}
+.note-card:active {
+  cursor: grabbing;
+}
+.note-card .note-text {
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--ink);
+  margin: 0 0 6px;
+  white-space: pre-wrap;
+}
+.note-card .note-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ===== whiteboard (placeholder, tldraw comes next milestone) ===== */
+
+.book-whiteboard {
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--paper-soft) 0 8px,
+    var(--paper) 8px 16px
+  );
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.whiteboard-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 14px;
+  border-bottom: 1px dashed var(--line);
+  background: var(--paper);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.whiteboard-toolbar .whiteboard-hint {
+  font-weight: 400;
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.whiteboard-stage {
+  flex: 1;
+  overflow: auto;
+}
+
+/* Mobile fallback */
+@media (max-width: 800px) {
+  .book-workspace {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+  .book-whiteboard {
+    min-height: 300px;
+  }
+}

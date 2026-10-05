@@ -146,13 +146,13 @@ function pickFeatured(books, n) {
 function renderFeaturedCard(book) {
   const reason = pickReason(book);
   return `
-    <div class="featured-card">
+    <a class="featured-card" href="${bookHref(book)}">
       ${coverOrFallback(book, "cover-wrap")}
       <p class="reason">${escapeHtml(reason.label)}</p>
       <h3 class="title">${escapeHtml(book.title)}</h3>
       <p class="author">${escapeHtml(book.author)}</p>
       <p class="why">${escapeHtml(reason.text)}</p>
-    </div>
+    </a>
   `;
 }
 
@@ -199,6 +199,128 @@ function startQuoteRotator() {
   if (_quoteTimer) clearInterval(_quoteTimer);
   _quoteTimer = setInterval(() => { if (!paused) tick(); }, 3000);
   show(0);
+}
+
+// ---------- view: BOOKSHELF (simple list) ----------
+
+function renderBooks() {
+  setActiveNav("books");
+  const stats = renderHeaderStats(state.books);
+
+  // Sort by lastReadDate desc, fallback to title.
+  const sorted = [...state.books].sort((a, b) => {
+    const da = a.lastReadDate || "";
+    const db = b.lastReadDate || "";
+    if (da !== db) return db.localeCompare(da);
+    return (a.title || "").localeCompare(b.title || "");
+  });
+
+  app.innerHTML = `
+    <div class="section-head" style="margin-bottom:24px">
+      <h2>书架</h2>
+      <p class="lead">共 ${stats.total} 本 · 已读完 ${stats.finished} 本 · 点击任意一本进入「书 + 白板」视图,把笔记拖进白板组织思路。</p>
+    </div>
+    <div class="featured-grid">
+      ${sorted.map(b => {
+        const reason = pickReason(b);
+        return `
+          <a class="featured-card" href="${bookHref(b)}">
+            ${coverOrFallback(b, "cover-wrap")}
+            <p class="reason">${escapeHtml(reason.label)}</p>
+            <h3 class="title">${escapeHtml(b.title)}</h3>
+            <p class="author">${escapeHtml(b.author)}</p>
+            <p class="why">${escapeHtml(reason.text)}</p>
+          </a>
+        `;
+      }).join("")}
+    </div>
+  `;
+}
+
+// ---------- view: BOOK DETAIL (left = notes, right = whiteboard) ----------
+
+function renderBook(slug) {
+  const book = state.books.find(b => b.slug === slug || b.id === slug);
+  setActiveNav("books");
+  if (!book) {
+    app.innerHTML = `
+      <div class="empty-state">
+        没有找到这本书。
+        <div style="margin-top:14px"><a class="btn btn-ghost" href="#/books">← 返回书架</a></div>
+      </div>`;
+    return;
+  }
+
+  const fallback = `<div class="book-cover-fallback" style="font-size:30px;padding:40px 16px;">${escapeHtml(book.title.slice(0, 12))}</div>`;
+  const cover = book.cover
+    ? `<img src="${escapeHtml(book.cover)}" alt="${escapeHtml(book.title)}" onerror="this.style.display='none';this.parentElement.insertAdjacentHTML('beforeend', this.dataset.fallback||'')" data-fallback="${escapeHtml(fallback)}" />`
+    : fallback;
+
+  const chaptersTotal = book.chapters.length;
+  const allNotes = book.chapters.flatMap(c => (c.notes || []).map(n => ({ ...n, chapter: c.chapter, chapterUid: c.chapterUid })));
+
+  app.innerHTML = `
+    <div class="book-workspace">
+      <aside class="book-left">
+        <div class="book-left-toolbar">
+          <a class="btn btn-ghost" href="#/books">← 返回书架</a>
+          <button class="btn btn-ghost" id="left-collapse" type="button" title="收起左侧(白板仍保留)">⟨ 收起</button>
+        </div>
+        <div class="book-left-body">
+          <div class="book-intro">
+            <div class="book-cover-large">${cover}</div>
+            <h1>${escapeHtml(book.title)}</h1>
+            <div class="author">${escapeHtml(book.author)}</div>
+            <dl class="meta-list">
+              <dt>分类</dt><dd>${escapeHtml(book.category || "—")}</dd>
+              <dt>出版社</dt><dd>${escapeHtml(book.publisher || "—")}</dd>
+              <dt>出版</dt><dd>${escapeHtml(book.publishDate || "—")}</dd>
+              <dt>笔记</dt><dd>${book.noteCount} 条 (本人 ${allNotes.filter(n => n.is_mine).length} 条)</dd>
+              <dt>进度</dt><dd>${isFinished(book) ? "已读完" : escapeHtml(book.progress || "0%")}</dd>
+            </dl>
+            ${book.summary ? `<p class="summary-text">${escapeHtml(book.summary)}</p>` : ""}
+            ${book.pcUrl ? `<a class="btn btn-primary" href="${escapeHtml(book.pcUrl)}" target="_blank" rel="noopener">在微信读书打开 ↗</a>` : ""}
+          </div>
+          <div class="book-notes">
+            <div class="section-head" style="margin: 18px 0 12px">
+              <h2 style="font-size:18px">高亮笔记 · ${allNotes.length} 条</h2>
+              <p class="lead" style="font-size:13px">拖拽笔记卡片到右侧白板,在那里组织你的思路。</p>
+            </div>
+            <div class="notes-board" id="notes-board">
+              ${allNotes.map((n, i) => `
+                <article class="note-card" draggable="true" data-note-idx="${i}" data-note-text="${escapeHtml(n.text)}" data-note-chapter="${escapeHtml(n.chapter)}">
+                  <p class="note-text">${escapeHtml(n.text)}</p>
+                  <div class="note-meta">
+                    <span>📖 ${escapeHtml(n.chapter)}</span>
+                    ${n.is_mine ? `<span>⏱ ${escapeHtml((n.ts || '').slice(0, 16))}</span>` : `<span>大众共读</span>`}
+                    ${n.count ? `<span>🔥 ${n.count} 人</span>` : ""}
+                  </div>
+                </article>
+              `).join("")}
+            </div>
+          </div>
+        </div>
+      </aside>
+      <section class="book-whiteboard" id="book-whiteboard">
+        <div class="whiteboard-toolbar">
+          <span>📋 思路白板</span>
+          <span class="whiteboard-hint">第一阶段仅展示骨架 · tldraw 集成在下个 commit 启用</span>
+        </div>
+        <div class="whiteboard-stage">
+          <p style="color: var(--muted); padding: 24px; font-size: 13px;">
+            (白板渲染区 · tldraw 集成后会在这里绘制文字/表格/连线)
+          </p>
+        </div>
+      </section>
+    </div>
+  `;
+
+  // 收起/展开左侧模块
+  document.getElementById("left-collapse")?.addEventListener("click", () => {
+    document.querySelector(".book-workspace")?.classList.toggle("left-collapsed");
+    const btn = document.getElementById("left-collapse");
+    if (btn) btn.textContent = document.querySelector(".book-workspace")?.classList.contains("left-collapsed") ? "⟩ 展开" : "⟨ 收起";
+  });
 }
 
 // ---------- view: RECOMMEND ----------
@@ -449,9 +571,14 @@ function route() {
   const hash = location.hash || "#/";
   const parts = hash.replace(/^#\/?/, "").split("/").filter(Boolean);
   if (parts.length === 0) return renderHome();
+  if (parts[0] === "books") {
+    if (parts[1]) return renderBook(decodeURIComponent(parts[1]));
+    return renderBooks();
+  }
   if (parts[0] === "recommend") return renderRecommend();
   if (parts[0] === "about") return renderAbout();
-  // Books / book / more 路由已移除 — fallback to home
+  // book detail shortcut
+  if (parts[0] === "book" && parts[1]) return renderBook(decodeURIComponent(parts[1]));
   renderHome();
 }
 
