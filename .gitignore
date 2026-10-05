@@ -13,6 +13,7 @@ node_modules/
 data/watcher.log
 data/_todo_summaries.json
 data/books.json
+data/more.json
 public/data/books.json
 public/data/more.json
 data/*.bak

@@ -1,14 +1,11 @@
 {
   "name": "weread-bookshelf",
   "version": "1.0.0",
-  "description": "张紫宁 · 一点有意思的书 — Cloudflare Pages + Worker + GitHub. Build pipeline reads Obsidian vault and emits public/data/{books,more}.json + mirrored assets.",
+  "description": "张紫宁 · 一点有意思的书 — 公开站,含首页 / 编辑推荐 / 关于三个页面。books.json 由本地 scripts/parse_books.py 生成,about.json 手工维护。",
   "type": "module",
-  "main": "scripts/parse_books.mjs",
   "scripts": {
     "build:books": "node scripts/parse_books.mjs",
-    "build:more": "node scripts/parse_more.mjs",
-    "build": "npm run build:books && npm run build:more",
-    "clean": "node -e \"const fs=require('fs');for(const f of ['data/books.json','public/data/books.json','data/more.json','public/data/more.json']){try{fs.unlinkSync(f)}catch(_){}}\"",
+    "build": "npm run build:books",
     "test": "echo \"No tests yet\" && exit 0"
   },
   "repository": {
@@ -18,7 +15,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "gray-matter": "^4.0.3",
-    "marked": "^18.0.14"
+    "gray-matter": "^4.0.3"
   }
 }

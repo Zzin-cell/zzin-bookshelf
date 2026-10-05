@@ -1,6 +1,0 @@
-# Cloudflare Pages — URL rewrites.
-# This site is a single-page app that uses hash routing (#/more/...), so the
-# server never sees deep-link paths and we don't need an SPA fallback.
-# This file exists mainly so CF Pages doesn't warn about a missing one.
-
-# nothing — leave file empty
