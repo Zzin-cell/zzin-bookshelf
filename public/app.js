@@ -264,10 +264,11 @@ function renderBook(slug) {
       <aside class="book-left">
         <div class="book-left-toolbar">
           <a class="btn btn-ghost" href="#/books">← 返回书架</a>
-          <button class="btn btn-ghost" id="left-collapse" type="button" title="收起左侧(白板仍保留)">⟨ 收起</button>
+          <button class="btn btn-ghost" id="left-collapse" type="button" title="收起整个左侧(白板仍保留)">⟨ 收起</button>
+          <button class="btn btn-ghost" id="intro-collapse" type="button" title="只看标题 + 收起简介(笔记仍显示)">▾ 简介</button>
         </div>
         <div class="book-left-body">
-          <div class="book-intro">
+          <div class="book-intro" id="book-intro">
             <div class="book-cover-large">${cover}</div>
             <h1>${escapeHtml(book.title)}</h1>
             <div class="author">${escapeHtml(book.author)}</div>
@@ -323,6 +324,13 @@ function renderBook(slug) {
     document.querySelector(".book-workspace")?.classList.toggle("left-collapsed");
     const btn = document.getElementById("left-collapse");
     if (btn) btn.textContent = document.querySelector(".book-workspace")?.classList.contains("left-collapsed") ? "⟩ 展开" : "⟨ 收起";
+  });
+
+  // 收起/展开简介(笔记仍显示)
+  document.getElementById("intro-collapse")?.addEventListener("click", () => {
+    document.getElementById("book-intro")?.classList.toggle("is-collapsed");
+    const btn = document.getElementById("intro-collapse");
+    if (btn) btn.textContent = document.getElementById("book-intro")?.classList.contains("is-collapsed") ? "▴ 简介" : "▾ 简介";
   });
 
   // 初始化白板(whiteboard.js 必须在此之前加载)

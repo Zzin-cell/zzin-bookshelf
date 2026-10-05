@@ -101,6 +101,46 @@ function wbDrawLine(svg, line) {
   const x2 = to.x + to.w / 2;
   const y2 = to.y + to.h / 2;
 
+  // 定义箭头 marker(双向)
+  const defs = svg.querySelector("defs") || (() => {
+    const d = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    svg.appendChild(d);
+    return d;
+  })();
+  if (!defs.querySelector("#wb-arrow-end")) {
+    [
+      ["end", x2, y2, x1, y1],
+    ].forEach(() => {});
+    const markerEnd = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    markerEnd.setAttribute("id", "wb-arrow-end");
+    markerEnd.setAttribute("markerWidth", "10");
+    markerEnd.setAttribute("markerHeight", "10");
+    markerEnd.setAttribute("refX", "8");
+    markerEnd.setAttribute("refY", "5");
+    markerEnd.setAttribute("orient", "auto");
+    markerEnd.setAttribute("markerUnits", "strokeWidth");
+    const pathE = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathE.setAttribute("d", "M0,0 L10,5 L0,10 z");
+    pathE.setAttribute("fill", "#5b7fbf");
+    markerEnd.appendChild(pathE);
+    defs.appendChild(markerEnd);
+  }
+  if (!defs.querySelector("#wb-arrow-start")) {
+    const markerStart = document.createElementNS("http://www.w3.org/2000/svg", "marker");
+    markerStart.setAttribute("id", "wb-arrow-start");
+    markerStart.setAttribute("markerWidth", "10");
+    markerStart.setAttribute("markerHeight", "10");
+    markerStart.setAttribute("refX", "2");
+    markerStart.setAttribute("refY", "5");
+    markerStart.setAttribute("orient", "auto-start-reverse");
+    markerStart.setAttribute("markerUnits", "strokeWidth");
+    const pathS = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    pathS.setAttribute("d", "M10,0 L0,5 L10,10 z");
+    pathS.setAttribute("fill", "#5b7fbf");
+    markerStart.appendChild(pathS);
+    defs.appendChild(markerStart);
+  }
+
   // 线本身
   const ln = document.createElementNS("http://www.w3.org/2000/svg", "line");
   ln.setAttribute("x1", x1);
@@ -110,16 +150,24 @@ function wbDrawLine(svg, line) {
   ln.setAttribute("stroke", "#5b7fbf");
   ln.setAttribute("stroke-width", "2");
   ln.setAttribute("stroke-linecap", "round");
+  if (line.bidirectional) {
+    ln.setAttribute("marker-end", "url(#wb-arrow-end)");
+    ln.setAttribute("marker-start", "url(#wb-arrow-start)");
+  } else {
+    ln.setAttribute("marker-end", "url(#wb-arrow-end)");
+  }
   svg.appendChild(ln);
 
-  // 端点小圆点
-  for (const [cx, cy] of [[x1, y1], [x2, y2]]) {
-    const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-    dot.setAttribute("cx", cx);
-    dot.setAttribute("cy", cy);
-    dot.setAttribute("r", "4");
-    dot.setAttribute("fill", "#5b7fbf");
-    svg.appendChild(dot);
+  // 端点小圆点(只在单向连线显示,双向会被箭头替代)
+  if (!line.bidirectional) {
+    for (const [cx, cy] of [[x1, y1], [x2, y2]]) {
+      const dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+      dot.setAttribute("cx", cx);
+      dot.setAttribute("cy", cy);
+      dot.setAttribute("r", "4");
+      dot.setAttribute("fill", "#5b7fbf");
+      svg.appendChild(dot);
+    }
   }
 
   // 线中点文字标注
@@ -184,18 +232,17 @@ function wbDrawElement(layer, el) {
   } else if (el.type === "table") {
     const rows = el.rows || 3;
     const cols = el.cols || 3;
-    const data = el.rowData || Array.from({ length: rows }, () => Array(cols).fill(""));
-    node.innerHTML = `<table class="wb-table-grid"><tbody>${data.map(row =>
-      `<tr>${row.map(cell => `<td contenteditable="true">${escapeHtml(cell)}</td>`).join("")}</tr>`
+    if (!el.cells) {
+      el.cells = Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ type: "text", text: "" })));
+    }
+    node.innerHTML = `<table class="wb-table-grid"><tbody>${el.cells.map((row, ri) =>
+      `<tr>${row.map((cell, ci) => wbRenderTableCell(el, ri, ci, cell)).join("")}</tr>`
     ).join("")}</tbody></table>`;
-    node.querySelectorAll("td").forEach((td, idx) => {
-      const r = Math.floor(idx / cols);
-      const c = idx % cols;
-      td.addEventListener("blur", () => {
-        if (!el.rowData) el.rowData = Array.from({ length: rows }, () => Array(cols).fill(""));
-        el.rowData[r][c] = td.innerText.trim();
-        wbPersist();
-      });
+    // 绑定 cell drag-and-drop 接收
+    node.querySelectorAll("td").forEach((td) => {
+      const ri = parseInt(td.dataset.row, 10);
+      const ci = parseInt(td.dataset.col, 10);
+      wbBindTableCellDrop(td, el.id, ri, ci);
     });
   }
 
@@ -213,6 +260,74 @@ function wbDrawElement(layer, el) {
   }
 
   layer.appendChild(node);
+}
+
+// ---------- table cell helpers ----------
+
+function wbRenderTableCell(el, rowIdx, colIdx, cell) {
+  if (cell && cell.type === "note") {
+    return `<td data-row="${rowIdx}" data-col="${colIdx}" class="wb-cell wb-cell-note" title="笔记模块 · 双击移除">
+      <div class="wb-cell-note-source">📖 ${escapeHtml(cell.chapter || "")}</div>
+      <div class="wb-cell-note-text">${escapeHtml(cell.text || "")}</div>
+      <div class="wb-cell-clear-hint">× 双击移除</div>
+    </td>`;
+  }
+  const txt = (cell && cell.text) || "";
+  return `<td data-row="${rowIdx}" data-col="${colIdx}" contenteditable="true" class="wb-cell">${escapeHtml(txt)}</td>`;
+}
+
+function wbBindTableCellDrop(td, tableId, rowIdx, colIdx) {
+  td.addEventListener("dragover", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    ev.dataTransfer.dropEffect = "copy";
+    td.classList.add("is-drop-target");
+  });
+  td.addEventListener("dragleave", () => td.classList.remove("is-drop-target"));
+  td.addEventListener("drop", (ev) => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    td.classList.remove("is-drop-target");
+    const text = ev.dataTransfer.getData("text/x-note-text");
+    const chapter = ev.dataTransfer.getData("text/x-note-chapter");
+    if (!text) return;
+    wbPutIntoCell(tableId, rowIdx, colIdx, { type: "note", text, chapter });
+  });
+  td.addEventListener("dblclick", () => {
+    const cell = wbGetCell(tableId, rowIdx, colIdx);
+    if (cell && cell.type === "note") {
+      if (confirm("清除此模块?回到空白文本框。")) {
+        wbPutIntoCell(tableId, rowIdx, colIdx, { type: "text", text: "" });
+      }
+    }
+  });
+  td.addEventListener("blur", () => {
+    if (td.isContentEditable) {
+      wbSetCellText(tableId, rowIdx, colIdx, td.innerText);
+    }
+  });
+}
+
+function wbGetCell(tableId, r, c) {
+  const tbl = wb.elements.find(e => e.id === tableId);
+  if (!tbl || !tbl.cells || !tbl.cells[r]) return null;
+  return tbl.cells[r][c] || null;
+}
+
+function wbPutIntoCell(tableId, r, c, value) {
+  const tbl = wb.elements.find(e => e.id === tableId);
+  if (!tbl || !tbl.cells || !tbl.cells[r]) return false;
+  tbl.cells[r][c] = value;
+  wbPersist();
+  wbRender();
+  return true;
+}
+
+function wbSetCellText(tableId, r, c, text) {
+  const cell = wbGetCell(tableId, r, c);
+  if (!cell || cell.type !== "text") return;
+  cell.text = text.trim();
+  wbPersist();
 }
 
 function wbWireElementHandlers(node, el) {
@@ -379,14 +494,14 @@ function wbCreateNote(x, y, content, chapter) {
 }
 
 function wbCreateTable(x, y, rows = 3, cols = 3) {
-  const rowData = Array.from({ length: rows }, () => Array(cols).fill(""));
   const el = {
     id: uid(),
     type: "table",
     x, y,
     w: Math.max(220, cols * 80),
     h: Math.max(80, rows * 32),
-    rows, cols, rowData,
+    rows, cols,
+    cells: Array.from({ length: rows }, () => Array.from({ length: cols }, () => ({ type: "text", text: "" }))),
   };
   wb.elements.push(el);
   wbPersist();
@@ -399,11 +514,14 @@ function wbBindStage() {
     if (wb.connect) {
       const node = ev.target.closest(".wb-element");
       if (node && node.dataset.id !== wb.connect.fromId) {
+        const choice = prompt("连线类型:输入 1 = 单向(→),2 = 双向(↔),直接回车 = 单向", "1");
+        const isBi = choice === "2";
         wb.lines.push({
           id: uid("ln"),
           fromId: wb.connect.fromId,
           toId: node.dataset.id,
           label: "",
+          bidirectional: isBi,
         });
         wb.connect = null;
         wb.stage.style.cursor = "";

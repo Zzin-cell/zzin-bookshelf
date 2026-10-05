@@ -2274,3 +2274,53 @@ button:disabled,
 .wb-resize-s  { bottom: -5px; left: 50%; margin-left: -5px; cursor: s-resize; }
 .wb-resize-sw { bottom: -5px; left: -5px; cursor: sw-resize; }
 .wb-resize-w  { top: 50%; left: -5px; margin-top: -5px; cursor: w-resize; }
+
+/* ===== intro collapse ===== */
+.book-intro.is-collapsed {
+  max-height: 0 !important;
+  padding: 0 18px;
+  border-bottom: none;
+  overflow: hidden;
+}
+
+/* ===== table cell as drop target ===== */
+.wb-table-grid td.wb-cell {
+  position: relative;
+  vertical-align: top;
+  background: #fff;
+  transition: background-color 100ms ease;
+}
+.wb-table-grid td.wb-cell.is-drop-target {
+  background: rgba(76, 110, 245, 0.15);
+  outline: 2px dashed #4c6ef5;
+  outline-offset: -2px;
+}
+.wb-table-grid td.wb-cell-note {
+  background: #fffaee;
+  border-left: 3px solid var(--gold);
+  vertical-align: top;
+}
+.wb-cell-note-source {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-bottom: 4px;
+}
+.wb-cell-note-text {
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+.wb-cell-clear-hint {
+  position: absolute;
+  top: 2px;
+  right: 4px;
+  font-size: 10px;
+  color: var(--muted);
+  opacity: 0;
+  transition: opacity 100ms ease;
+  pointer-events: none;
+}
+.wb-table-grid td.wb-cell-note:hover .wb-cell-clear-hint {
+  opacity: 1;
+}
