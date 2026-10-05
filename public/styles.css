@@ -1950,6 +1950,7 @@ button:disabled,
   border-radius: 12px;
   background: var(--paper-soft);
   overflow: hidden;
+  min-height: 0;
 }
 .book-left-toolbar {
   display: flex;
@@ -1969,15 +1970,18 @@ button:disabled,
 
 .book-left-body {
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
   flex: 1;
+  min-height: 0;
 }
 
 .book-intro {
   padding: 16px 18px;
   border-bottom: 1px solid var(--line);
   overflow: auto;
+  max-height: 50%;
+  flex-shrink: 0;
 }
 .book-intro .book-cover-large {
   width: 100%;
@@ -2039,6 +2043,7 @@ button:disabled,
 
 .book-notes {
   overflow: auto;
+  min-height: 0;
   padding: 0 18px 18px;
 }
 .notes-board {
